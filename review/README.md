@@ -2,7 +2,7 @@
 
 # Catalog and Editor usage
 
-Run `open_review.cmd`. English is the initial language; Japanese is available from the catalog language menu. The preferred port is 8790. Switch between Characters and Styles, search names and original tags, or filter by copyright and appearance. Copyright sorting places the largest matching groups first.
+Use `open_review.cmd` on Windows, `open_review.command` on macOS, or `sh ./open_review.sh` on Linux from the extracted folder. See [OS setup](../docs/PLATFORMS.md). English is the initial language; Japanese is available from the catalog language menu. The preferred port is 8790. Switch between Characters and Styles, search names and original tags, or filter by copyright and appearance. Copyright sorting places the largest matching groups first.
 
 Filters, language, display settings, and page position are stored in your browser. Visibility, favorites, and star ratings are stored in `outputs/review_state.json` and survive reloads and restarts.
 
@@ -30,7 +30,7 @@ In the separate Editor, Close (keep draft) preserves the chosen image, text, and
 
 Language and theme are inherited from the catalog. The Editor does not add separate switches. Its image-and-information layout follows the catalog detail panel. Browser-tab close or F5 may require selecting the image again; use the Editor's Close control to keep the image draft.
 
-Edits affect only changed fields. Images, generation records, favorites, visibility, and ratings are retained. Open original image, Show image in folder, and Open workflow JSON (when available) provide access to saved files. On Windows, Show image in folder selects the file in Explorer.
+Edits affect only changed fields. Images, generation records, favorites, visibility, and ratings are retained. Open original image, Open image folder, and Open workflow JSON (when available) provide access to saved files. Open image folder selects the file in Explorer on Windows, reveals it in Finder on macOS, and opens its parent directory on Linux when a desktop file manager is available.
 
 ## Python and storage
 

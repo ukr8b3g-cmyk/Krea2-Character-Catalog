@@ -15,6 +15,7 @@ import threading
 import unicodedata
 import uuid
 from PIL import Image
+from runtime_support import reveal_image
 
 MAX_IMAGE = 64 * 1024 * 1024
 FIELDS = ('name', 'copyright', 'copy_prompt', 'copy_tags', 'kind')
@@ -266,9 +267,7 @@ class EditorCatalog:
     def reveal(self, record):
         path=self.path(record['files']['image'])
         if not path.is_file(): raise ValueError('画像が見つかりません。')
-        if os.name!='nt': raise ValueError('画像の場所表示はWindowsで利用できます。')
-        subprocess.Popen(['explorer.exe','/select,',str(path)])
-        return {'opened':True}
+        return reveal_image(path)
 
     def csv_rows(self, data, query='', mapping=None):
         if not isinstance(query,str): raise ValueError('検索語を文字で指定してください。')

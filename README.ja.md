@@ -1,41 +1,55 @@
 [English](./README.md)
 
+**Windows・macOS・Linux対応。カタログ本体のZIPは1つです。** Python 3.10以上とブラウザーが必要です。初期言語は英語です。
+
+| OS | 展開した `Krea2-Character-Catalog` フォルダーで開くもの |
+|---|---|
+| Windows | `open_review.cmd` をダブルクリック |
+| macOS | `open_review.command` をダブルクリック。実行権限が保持されない場合は下記のターミナル手順を使用 |
+| Linux | このフォルダー内で `sh ./open_review.sh` を実行 |
+
+Editorを直接開く場合は、同じOS用の `open_editor.cmd`・`open_editor.command`・`open_editor.sh` を使います。すべて同じブラウザー画面を開きます。[OS別の起動・検証範囲](docs/PLATFORMS.md)も確認してください。
+
 <img width="1269" height="743" alt="{604FEE72-032C-4BC9-8AA0-8E2AAB612015}" src="https://github.com/user-attachments/assets/f4878143-6a91-4529-917e-c9bdce45d322" />
 
 
 
-# Krea2 Character Catalog v0.9
+# Krea2 Character Catalog v0.91
 
-Krea2で生成したキャラクターとスタイルの見本を、検索・比較しながらプロンプトや元タグと一緒に使うためのローカルカタログです。Windows向けの画像追加・編集ツールも含みます。
+Krea2で生成したキャラクターとスタイルの見本を、検索・比較しながらプロンプトや元タグと一緒に使うためのローカルカタログです。Windows・macOS・Linux向けの画像追加・編集ツールも含みます。
 
 **このカタログは Incomplete / 不完全です。** 名前や作品との対応、色・形・雰囲気を目視で確認していますが、似ているという理由で残したものもあります。全画像を人間が十分に確認できたものではなく、生成結果が適切でない画像や、誤ったキャラクター・作風も含まれる可能性があります。キャラクター・スタイルとも暫定です。ダウンロード後も利用者自身で再確認し、必要に応じて編集・非表示・再生成して修正してください。修正や改善の報告を歓迎します。
 
 ## ダウンロードとライブデモ
 
-- **[v0.9のZIPと不合格再生成用JSON](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9)**
+- **[v0.91のZIPと不合格再生成用JSON](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.91)**
 - **[最新版のRelease](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest)**
 - **[閲覧用ライブデモ](https://ukr8b3g-cmyk.github.io/Krea2-Character-Catalog/)**
 
-通常はReleaseの `Krea2-Character-Catalog-v0.9.zip` をダウンロードしてください。合格として残した画像・元タグCSV・ワークフロー見本・Editorをまとめて含みます。展開すると `Krea2-Character-Catalog` フォルダーができます。Python本体と生成モデルは同梱していません。
+通常はReleaseの `Krea2-Character-Catalog-v0.91.zip` をダウンロードしてください。合格として残した画像・元タグCSV・ワークフロー見本・Editorをまとめて含みます。展開すると `Krea2-Character-Catalog` フォルダーができます。Python本体と生成モデルは同梱していません。
 
 GitHubの **Code → Download ZIP / Source code** は開発用ソースです。画像を含む完成したカタログはReleaseの上記ZIPにあります。各バージョンのReleaseから、その版のZIPを引き続きダウンロードできます。
 
 ## すぐに使う
 
 1. ZIPをすべて展開します。ZIPの中から直接実行しないでください。
-2. `open_review.cmd` をダブルクリックします。
+2. 上の表から、自分のOS用の起動ファイルを開きます。
 3. ブラウザーでカタログが開きます。キャラクター／スタイルを切り替え、名前・作品・外見タグで絞り込めます。
 4. 画像をクリックすると詳細が開き、Krea2用プロンプトや元タグをコピーできます。
 
 初期アドレスは `http://127.0.0.1:8790/` です。使用中なら空いているポートを選び、実際のアドレスをブラウザーで開きます。別のアプリを停止・置換しません。同じカタログが起動済みならそのサービスを再利用します。公開インターネットに待ち受けを作らず、ローカルPCで使います。
 
-Python **3.10以上**とPillow **10以上13未満・WebP対応**を確認します。利用できる既存Pythonを優先し、必要なら検出したPythonで専用 `.venv` を作ります。システム全体へPillowを追加しません。初回の依存導入にはインターネット接続が必要です。Python本体がない場合は、[Python公式サイト](https://www.python.org/downloads/windows/)から用意してください。
+Python **3.10以上**とPillow **10以上13未満・WebP対応**を確認します。利用できる既存Pythonを優先し、必要なら検出したPythonで専用 `.venv` を作ります。システム全体へPillowを追加しません。初回の依存導入にはインターネット接続が必要です。Python本体がない場合は、[Python公式サイト](https://www.python.org/downloads/)から用意してください。
 
 特定のPythonを使う場合は `KREA2_CATALOG_PYTHON` 環境変数を設定するか、フォルダー内で次を実行します。
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/open_review.ps1 -Python "C:\Python\python.exe"
+```sh
+python tools/launch_catalog.py --python "<利用するPythonの実行ファイル>"
 ```
+
+macOS・Linuxでは、必要に応じて `python` を `python3` に置き換えてください。Macでダブルクリック起動できない場合は、このフォルダー内で `sh ./open_review.command` を実行できます。ZIPには実行権限を設定しますが、展開ツールによって保持されない場合があります。
+
+このカタログだけを終了するには `python tools/launch_catalog.py --stop` を実行します。ブラウザーのタブを閉じても、再度開けるようにローカルサービスは残ります。
 
 検索条件・表示設定・ページ位置はブラウザーへ、非表示・お気に入り・星評価はローカルファイルへ保存します。同じカタログを再び開くと保存済み状態を使います。ZIPに個人のお気に入り・星評価・入力途中の下書きは含めていません。
 
@@ -49,7 +63,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/open_review.ps1 -Pytho
 
 **Krea2 Catalog Editor** は、自分で生成した画像を登録し、名前・作品・再利用プロンプト・タグを整えるための標準ツールです。画像の生成やAIによる自動合否判定は行いません。
 
-1. カタログ上部の「画像を追加」、または `open_editor.cmd` を開きます。
+1. カタログ上部の「画像を追加」、またはOSに対応したEditorの起動ファイルを開きます。
 2. 画像を選択・ドロップします。**WebP推奨**、PNG・JPEGにも対応します。1枚64MBまでです。
 3. 必要な情報だけ入力し、「登録」を押します。
 
@@ -93,9 +107,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/open_review.ps1 -Pytho
 
 詳細パネルの「元画像を開く」「画像の場所を開く」から、生成情報を持つWebPを取り出せます。対応するComfyUIへドラッグ＆ドロップするとワークフローを読み込めます。
 
-v0.9では、配布コピーのメタデータから元PCのCSVパスを外しました。キャラクター画像のCSVノードは、保存済みの生成文を `manual_prompt` として直接使います。同梱の `ComfyUI-Krea2-Catalog-Tools` を利用者のComfyUIの `custom_nodes` に置き、ComfyUIを再起動してください。モデル名や不足ノードは各自の環境に合わせます。元の画像の圧縮画素データは変更していません。古い画像など生成情報のない例もあり、すべての画像で条件が完全復元できるわけではありません。
+v0.91では、配布コピーのメタデータから元PCのCSVパスを外しました。キャラクター画像のCSVノードは、保存済みの生成文を `manual_prompt` として直接使います。同梱の `ComfyUI-Krea2-Catalog-Tools` を利用者のComfyUIの `custom_nodes` に置き、ComfyUIを再起動してください。モデル名や不足ノードは各自の環境に合わせます。元の画像の圧縮画素データは変更していません。古い画像など生成情報のない例もあり、すべての画像で条件が完全復元できるわけではありません。
 
-不合格画像はカタログ・ZIPに含めていません。再生成用JSONは別の `Krea2-Character-Catalog-Rejected-Workflows-v0.9.zip` です。13,486件は保存された生成情報に基づき、旧版11件は元情報がない編集用テンプレートです。不合格のJSONを実行しても合格を保証するものではありません。画像やブランクのカードを本体へ復活させずに、必要なレシピだけを使えます。
+不合格画像はカタログ・ZIPに含めていません。再生成用JSONは別の `Krea2-Character-Catalog-Rejected-Workflows-v0.91.zip` です。13,486件は保存された生成情報に基づき、旧版11件は元情報がない編集用テンプレートです。不合格のJSONを実行しても合格を保証するものではありません。画像やブランクのカードを本体へ復活させずに、必要なレシピだけを使えます。
 
 ## 簡易ライブデモ
 
@@ -135,6 +149,6 @@ AIは候補を提案し、人間が最後に判断します。選択して確定
 
 ## English quick start
 
-Download **Krea2-Character-Catalog-v0.9.zip** from [Releases](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest), extract it, then double-click `open_review.cmd`. A working Python 3.10+ is reused; a private virtual environment is created when needed. The catalog supports Japanese and English UI. Add your own WebP, PNG or JPEG with the standard Editor; all text fields are optional.
+Download **Krea2-Character-Catalog-v0.91.zip** from [Releases](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest), extract it, then double-click `open_review.cmd`. A working Python 3.10+ is reused; a private virtual environment is created when needed. The catalog supports Japanese and English UI. Add your own WebP, PNG or JPEG with the standard Editor; all text fields are optional.
 
 This is an **incomplete, provisional catalog**. Please review and correct images and metadata yourself. The GitHub Pages site is a simplified **read-only static demo**, not the full Python application. Source-code archives do not include the image collection; use the named Release ZIP for the complete catalog.

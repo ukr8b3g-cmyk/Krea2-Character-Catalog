@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.91 — 2026-10-13
+
+- One catalog ZIP for Windows, macOS, and Linux, with OS-specific Catalog and Editor startup files.
+- Shared Python launcher reuses a compatible existing interpreter or prepares a private venv; no system-wide Pillow installation.
+- Persistent service reuse, cross-platform instance locks, occupied-port fallback, explicit shutdown, and portable paths.
+- Explorer/Finder integration and Linux image-folder opening when a desktop file manager is available.
+- Native-OS automated ZIP/runtime checks; macOS Finder double-click and Linux file-manager GUI behavior remain unverified manually.
+- English and Japanese startup instructions. Included images, tags, judgments, and workflows are unchanged from v0.9.
+
+
 ## v0.9 — 2026-10-13
 
 Initial public release. Includes 3,809 provisional character images and 110 style images, a Windows local catalog, the standard image-registration Editor, inline metadata editing, portable ComfyUI workflow examples, four decision lists and an optional AnimaDex comparison skill.

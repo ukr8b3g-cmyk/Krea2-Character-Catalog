@@ -13,6 +13,7 @@ from catalog_editor import EditorCatalog, decode_bytes, inspect_image
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
+from runtime_support import CatalogLock, atomic_json, catalog_version, folder_available, read_json
 
 
 RUN = re.compile(r"(?:run|test)-[0-9]{8}-[0-9]{6}")
@@ -492,10 +493,10 @@ def make_server(root, port=8767):
             url = urlsplit(self.path)
             try:
                 if url.path == "/api/info":
-                    self.json({"app": "Krea2CatalogReview", "root": str(store.root), "pid": os.getpid(), "visibility_mode": "flags", "hidden_export": True, "editor_version": 1})
+                    self.json({"app": "Krea2CatalogReview", "root": str(store.root), "pid": os.getpid(), "visibility_mode": "flags", "hidden_export": True, "editor_version": 1, "catalog_version": catalog_version(store.root), "folder_available": folder_available()})
                 elif url.path == "/api/editor/bootstrap":
                     sources = [name for name, relative in [("characters", "original_tags/anima_characters.csv"), ("styles", "original_tags/styles/selected_all_styles.csv"), ("sample", "comfyui/inputs/thumbnail_prompts.csv")] if (store.root / relative).is_file()]
-                    self.json({"token": token, "sources": sources, "editor_version": 1})
+                    self.json({"token": token, "sources": sources, "editor_version": 1, "folder_available": folder_available()})
                 elif url.path == "/api/editor/record":
                     key = parse_qs(url.query).get("key", [""])[0]
                     store.refresh()
@@ -561,7 +562,7 @@ def make_server(root, port=8767):
                                 if response_cache["revision"] != stamp:
                                     listing = store.listing()
                                     response_cache["content"] = json.dumps({**listing, "token": token, "version": current,
-                                                                          "optimizer_version": 1}, ensure_ascii=False).encode("utf-8")
+                                                                          "optimizer_version": 1, "folder_available": folder_available()}, ensure_ascii=False).encode("utf-8")
                                     response_cache["revision"] = stamp
                                 content = response_cache["content"]
                             code = 200
@@ -701,14 +702,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Review generated images locally with reversible hiding and no file moves.")
     parser.add_argument("--root", type=Path, default=ASSETS.parent)
     parser.add_argument("--port", type=int, default=8790)
+    parser.add_argument("--fallback-port", action="store_true")
     args = parser.parse_args()
-    server = make_server(args.root, args.port)
-    service_path = args.root / "outputs/review_service.json"
-    service_path.write_text(json.dumps({"pid": os.getpid(), "url": f"http://127.0.0.1:{server.server_port}/",
-                                      "root": str(args.root.resolve()), "python": __import__("sys").executable, "method": "Python stdlib HTTP server"}, indent=2), encoding="utf-8")
-    print(f"Review screen: http://127.0.0.1:{server.server_port}/", flush=True)
-    try:
-        server.serve_forever()
-    finally:
-        server.server_close()
-        service_path.unlink(missing_ok=True)
+    args.root = args.root.resolve()
+    with CatalogLock(args.root / 'outputs/review_server.lock', timeout=0):
+        try:
+            server = make_server(args.root, args.port)
+        except OSError as error:
+            import errno
+            occupied = error.errno in (errno.EADDRINUSE, 10048) or (os.name == 'nt' and getattr(error, 'winerror', None) == 10013)
+            if not args.fallback_port or not args.port or not occupied:
+                raise
+            server = make_server(args.root, 0)
+        service_path = args.root / "outputs/review_service.json"
+        atomic_json(service_path, {"pid":os.getpid(), "url":f"http://127.0.0.1:{server.server_port}/",
+                    "root":str(args.root), "python":__import__('sys').executable,
+                    "version":catalog_version(args.root), "method":"Portable Python launcher"})
+        print(f"Review screen: http://127.0.0.1:{server.server_port}/", flush=True)
+        try:
+            server.serve_forever()
+        finally:
+            server.server_close()
+            if read_json(service_path).get('pid') == os.getpid():
+                service_path.unlink(missing_ok=True)

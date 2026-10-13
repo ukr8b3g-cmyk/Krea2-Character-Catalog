@@ -1,2 +1,3 @@
 @echo off
-powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0tools\open_review.ps1"
+call "%~dp0tools\bootstrap.cmd" %*
+exit /b %errorlevel%
