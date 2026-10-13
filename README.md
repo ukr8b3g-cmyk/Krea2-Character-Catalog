@@ -1,5 +1,8 @@
 [日本語 / Japanese](README.ja.md)
 
+<img width="1269" height="743" alt="{604FEE72-032C-4BC9-8AA0-8E2AAB612015}" src="https://github.com/user-attachments/assets/e1904ff8-181d-4792-bb61-95b17fddf90a" />
+
+
 # Krea2 Character Catalog v0.9
 
 A local catalog of Krea2-generated character and style samples, with searchable tags, reusable prompts, and an image registration and editing tool for Windows. **English is the default interface language.** Japanese is also available; your language choice is remembered.
