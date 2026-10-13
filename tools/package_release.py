@@ -55,7 +55,7 @@ def safe_extract(archive, destination):
 
 
 def include_source(path):
-    if any(p in ('.git','__pycache__','tests','dist','outputs','original_tags') or p.startswith('.venv') for p in path.parts):
+    if any(p in ('.git','__pycache__','tests','dist','outputs','original_tags') or p.startswith(('.venv','.catalog-venv')) for p in path.parts):
         return False
     if path.name == 'SHA256SUMS.txt' or path.suffix in ('.pyc','.zip','.log'):
         return False
@@ -70,8 +70,8 @@ def build(source, destination, base, rejected):
     if digest(base) != BASE_SHA or digest(rejected) != REJECTED_SHA:
         raise ValueError('The saved v0.9 data has changed.')
     version = (source/'VERSION').read_text(encoding='utf-8-sig').strip()
-    if version != '0.91':
-        raise ValueError('This build recipe requires version 0.91.')
+    if version != '0.9.1':
+        raise ValueError('This build recipe requires version 0.9.1.')
     entries = {}
     with zipfile.ZipFile(base) as previous:
         if previous.testzip() is not None:
@@ -90,7 +90,7 @@ def build(source, destination, base, rejected):
             entries[relative.as_posix()] = path.read_bytes()
     forbidden = ('__pycache__','.venv','review_service.json','python_runtime.json','review_state.json','user_catalog.json','user_catalog_edits.json')
     for name in entries:
-        if any(part in forbidden or part.startswith('.venv') for part in PurePosixPath(name).parts) or name.endswith(('.log','.lock','.pyc')):
+        if any(part in forbidden or part.startswith(('.venv','.catalog-venv')) for part in PurePosixPath(name).parts) or name.endswith(('.log','.lock','.pyc')):
             raise ValueError('Private runtime file in archive: ' + name)
         if name.endswith(('.command','.sh')):
             entries[name] = entries[name].replace(b'\r\n',b'\n')

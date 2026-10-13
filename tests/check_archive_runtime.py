@@ -15,6 +15,7 @@ import urllib.request
 import urllib.parse
 import uuid
 import zipfile
+from bootstrap_conditions import check as check_bootstrap, invoke
 from PIL import Image
 
 SOURCE=Path(__file__).resolve().parent.parent
@@ -32,7 +33,7 @@ def post(base,path,payload,token):
     with HTTP.open(request,timeout=20) as response:return json.load(response)
 
 
-def run(archive,report_path,test_venv=False,keep=False):
+def run(archive,report_path,test_venv=False,keep=False,old_python=None,browser_test=False):
     temporary=tempfile.TemporaryDirectory(prefix='Krea2 ZIP test ')
     install=Path(temporary.name)/'Folder with spaces 日本語'
     safe_extract(archive,install)
@@ -55,8 +56,10 @@ def run(archive,report_path,test_venv=False,keep=False):
         assert not (root/'outputs/review_service.json').exists()
     checks=[]
     try:
+        if test_venv:
+            checks.extend(check_bootstrap(root,Path(temporary.name),old_python))
         first=launch(['--port','0']);base=first['url'].rstrip('/')
-        assert first['version']=='0.91' and not first['reused'];checks.append('native_entrypoint')
+        assert first['version']=='0.9.1' and not first['reused'];checks.append('native_entrypoint')
         info=get(base,'/api/info');assert Path(info['root']).resolve()==root.resolve()
         listing=get(base,'/api/list');assert len(listing['entries'])==3919
         assert len([e for e in listing['entries'] if e['kind']=='style'])==110
@@ -71,8 +74,20 @@ def run(archive,report_path,test_venv=False,keep=False):
         assert saved['saved'];key=saved['key'];record=get(base,'/api/editor/record?key='+key)['record']
         assert record['name']=='blank fields' and record['copy_prompt']=='' and record['copy_tags']==''
         assert (root/'outputs'/record['files']['image']).read_bytes()==raw;checks.append('blank_field_webp_registration')
+        for fmt,filename,color in [('PNG','日本語 空白.PnG',(73,22,81)),('JPEG','MiXeD 名前.JpEg',(44,65,21))]:
+            stream=io.BytesIO();Image.new('RGB',(29,39),color).save(stream,format=fmt)
+            original=stream.getvalue()
+            added=post(base,'/api/editor/add',{'operation_id':str(uuid.uuid4()),'filename':filename,'image_base64':base64.b64encode(original).decode()},token)
+            r=get(base,'/api/editor/record?'+urllib.parse.urlencode({'key':added['key']}))['record']
+            assert r['source_filename']==filename and r['name']==Path(filename).stem
+            assert (root/'outputs'/r['files']['image']).read_bytes()==original
+        checks.append('png_jpeg_webp_original_bytes_and_mixed_case_filenames')
         changed=post(base,'/api/editor/edit',{'key':key,'image_sha256':image_hash,'fields':{'name':'Edited 日本語','copyright':'Runtime test','copy_prompt':'test prompt','copy_tags':'test, tags'}},token)
         assert changed['saved'];assert get(base,'/api/editor/record?key='+key)['record']['name']=='Edited 日本語';checks.append('edit_saved')
+        check_write_failure(root,base,token,key,image_hash)
+        checks.append('write_failure_protects_saved_data')
+        if browser_test:
+            check_browser(base,root,Path(temporary.name));checks.append('chromium_list_search_add_edit_save_reload')
         post(base,'/api/hide',{'keys':[key]},token)
         post(base,'/api/favorite',{'key':key,'enabled':True},token)
         stop();checks.append('clean_shutdown')
@@ -84,16 +99,23 @@ def run(archive,report_path,test_venv=False,keep=False):
         base=restarted['url'].rstrip('/');listing=get(base,'/api/list')
         edited=next(e for e in listing['entries'] if e['key']==key)
         assert edited['name']=='Edited 日本語' and edited['hidden'] and edited['favorite'];checks.append('state_survives_restart')
+        if browser_test:
+            assert any(e['name']=='CI Browser saved' for e in listing['entries'])
+            checks.append('browser_saved_entry_survives_backend_restart')
         stop()
         if test_venv:
-            result=subprocess.run([sys.executable,'-B',str(launcher),'--resolve-only','--force-venv','--json'],env=env,capture_output=True,text=True,timeout=240)
+            result=invoke(root,['--resolve-only','--force-venv'],env,timeout=240)
             assert result.returncode==0,result.stderr
-            resolved=json.loads(result.stdout.strip())['python'];assert '.venv' in Path(resolved).parts
+            resolved=json.loads(result.stdout.strip())['python'];assert '.catalog-venv' in Path(resolved).parts
             subprocess.run([resolved,'-c',"from PIL import features; assert features.check('webp')"],check=True)
             checks.append('private_venv_and_webp')
-        report={'platform':sys.platform,'python':sys.version.split()[0],'checks':checks,'passed':True,'desktop_file_manager_manually_tested':False}
+        report={'platform':sys.platform,'python':sys.version.split()[0],'checks':checks,'passed':True,'desktop_file_manager_manually_tested':False,'animadex_integration_tested':False}
         report_path.parent.mkdir(parents=True,exist_ok=True);report_path.write_text(json.dumps(report,indent=2),encoding='utf-8')
         print(json.dumps(report),flush=True)
+    except Exception as error:
+        report_path.parent.mkdir(parents=True,exist_ok=True)
+        report_path.write_text(json.dumps({'platform':sys.platform,'passed':False,'checks':checks,'error':str(error)},indent=2),encoding='utf-8')
+        raise
     finally:
         try:stop()
         finally:
@@ -102,6 +124,76 @@ def run(archive,report_path,test_venv=False,keep=False):
             else:temporary.cleanup()
 
 
+def check_write_failure(root,base,token,key,digest):
+    target=root/'outputs/user_catalog_edits.json';before=target.read_bytes()
+    catalog=root/'outputs/user_catalog.json';before_catalog=catalog.read_bytes()
+    operation=uuid.uuid4()
+    if os.name=='nt':
+        import ctypes
+        kernel=ctypes.WinDLL('kernel32',use_last_error=True)
+        kernel.CreateFileW.argtypes=[ctypes.c_wchar_p,ctypes.c_uint32,ctypes.c_uint32,ctypes.c_void_p,ctypes.c_uint32,ctypes.c_uint32,ctypes.c_void_p]
+        kernel.CreateFileW.restype=ctypes.c_void_p
+        handles=[kernel.CreateFileW(str(f),0x80000000,1,None,3,0,None) for f in (target,catalog)]
+        assert all(h not in (None,ctypes.c_void_p(-1).value) for h in handles)
+    else:
+        mode=target.parent.stat().st_mode;target.parent.chmod(0o500)
+    try:
+        try:
+            post(base,'/api/editor/edit',{'key':key,'image_sha256':digest,'fields':{'name':'MUST NOT SAVE'}},token)
+            raise AssertionError('Write failure must not report success')
+        except urllib.error.HTTPError as error:
+            assert error.code>=400 and 'WRITE_PERMISSION' in error.read().decode()
+        stream=io.BytesIO();Image.new('RGB',(53,33),(77,9,43)).save(stream,format='PNG')
+        try:
+            post(base,'/api/editor/add',{'operation_id':str(operation),'filename':'failed.PNG','image_base64':base64.b64encode(stream.getvalue()).decode()},token)
+            raise AssertionError('Failed registration must not report success')
+        except urllib.error.HTTPError as error:
+            assert error.code>=400 and 'WRITE_PERMISSION' in error.read().decode()
+        assert target.read_bytes()==before
+        assert catalog.read_bytes()==before_catalog
+        assert not (root/'outputs/user_items'/operation.hex).exists()
+        assert get(base,'/api/editor/record?key='+key)['record']['name']=='Edited 日本語'
+        if os.name!='nt':
+            result=invoke(root,['--resolve-only'],{**os.environ,'CI':'true','KREA2_CATALOG_PYTHON':sys.executable})
+            assert result.returncode==14 and 'WRITE_PERMISSION' in result.stderr,result.stderr
+    finally:
+        if os.name=='nt':
+            kernel.CloseHandle.argtypes=[ctypes.c_void_p]
+            for handle in handles:kernel.CloseHandle(handle)
+        else:target.parent.chmod(mode)
+    assert not list(target.parent.glob('*.tmp'))
+
+
+def check_browser(base,root,directory):
+    # CI-only disposable headless Chromium, distinct from a user's desktop/browser.
+    from playwright.sync_api import sync_playwright, expect
+    image=directory/'UI 架空.PNG';Image.new('RGB',(23,27),(77,81,65)).save(image)
+    with sync_playwright() as p:
+        browser=p.chromium.launch()
+        page=browser.new_page()
+        page.goto(base)
+        expect(page.locator('#grid .card').first).to_be_visible(timeout=30000)
+        page.locator('#search').fill('akari (pokemon)')
+        expect(page.locator('#grid .card')).to_have_count(1)
+        page.reload();expect(page.locator('#search')).to_have_value('akari (pokemon)')
+        page.goto(base+'/editor')
+        page.locator('#file').set_input_files(str(image))
+        page.locator('#name').fill('CI Browser 日本語')
+        page.locator('#register').click()
+        expect(page.locator('#status')).to_contain_text('Saved to the catalog.',timeout=20000)
+        page.goto(base)
+        page.locator('#search').fill('CI Browser 日本語')
+        expect(page.locator('#grid .card')).to_have_count(1)
+        page.locator('#grid .card img').click()
+        page.locator('#detail-edit').click()
+        page.locator('#edit-name').fill('CI Browser saved')
+        page.locator('#panel-edit-save').click()
+        expect(page.locator('#detail-name')).to_have_text('CI Browser saved')
+        page.reload();page.locator('#search').fill('CI Browser saved')
+        expect(page.locator('#grid .card')).to_have_count(1)
+        browser.close()
+
+
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--archive',type=Path,required=True);parser.add_argument('--report',type=Path,required=True);parser.add_argument('--test-venv',action='store_true');args=parser.parse_args()
-    run(args.archive,args.report,args.test_venv)
+    parser=argparse.ArgumentParser();parser.add_argument('--archive',type=Path,required=True);parser.add_argument('--report',type=Path,required=True);parser.add_argument('--test-venv',action='store_true');parser.add_argument('--old-python');parser.add_argument('--browser-test',action='store_true');args=parser.parse_args()
+    run(args.archive,args.report,args.test_venv,old_python=args.old_python,browser_test=args.browser_test)

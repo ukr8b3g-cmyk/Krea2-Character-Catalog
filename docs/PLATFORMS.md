@@ -1,57 +1,74 @@
-# Windows, macOS, and Linux
+# v0.9.1 platform setup and verification
 
-One complete catalog ZIP supports all three desktop operating systems. This concerns catalog browsing, registration, and editing. Set up ComfyUI and generation models separately for your own hardware.
+The complete ZIP includes Windows, macOS, and Linux launchers. Python **3.10 or later** and a web browser are required. Python itself and generation models are not bundled. The catalog does not install or upgrade your existing Python environment.
 
 ## Open the catalog
 
-Extract the complete Release ZIP into a writable folder. The top-level folder is `Krea2-Character-Catalog`.
+Extract the complete ZIP into a writable folder named `Krea2-Character-Catalog`.
 
 | OS | Catalog | Direct Editor |
 |---|---|---|
 | Windows | Double-click `open_review.cmd` | Double-click `open_editor.cmd` |
-| macOS | Double-click `open_review.command` | Double-click `open_editor.command` |
-| Linux | `sh ./open_review.sh` | `sh ./open_editor.sh` |
+| macOS | `open_review.command`, or Terminal: `sh ./open_review.command` | `open_editor.command`, or `sh ./open_editor.command` |
+| Linux | Terminal: `sh ./open_review.sh` | `sh ./open_editor.sh` |
 
-For macOS Terminal fallback, run `sh ./open_review.command` or `sh ./open_editor.command` from the extracted folder. Shell startup files use LF newlines and include executable permissions in the ZIP; some extraction tools may remove those permissions. Linux file-manager double-click behavior depends on the desktop environment, so the documented entry is the terminal command.
+macOS double-click is intended but not physically verified. Extraction tools may remove executable permission; using `sh` does not require that permission. Linux file-manager double-click behavior depends on the desktop; use the documented terminal command. General desktop OS warnings, permission dialogs, default browser opening, and actual Finder/Explorer/xdg-open integration are distinct from headless CI tests.
 
-After startup, the launcher opens your browser at `http://127.0.0.1:8790/`, or another available local port. The actual address is printed. If automatic browser opening is unavailable, copy that address into your browser. The service only listens on the local PC. The launcher remembers the actual port and reuses a matching running service for this same folder.
+The preferred address is `http://127.0.0.1:8790/`. A busy port results in a different free local port. The actual address is printed, and a matching service for this catalog folder is reused. Other applications are never terminated. Closing the browser tab leaves this catalog service available. Pass `--stop` to the OS startup file to stop this catalog only.
 
-## Python and dependencies
+## Install Python first
 
-Python 3.10+ must already be installed. The launcher checks Pillow 10–12 and WebP support. It reuses an existing compatible Python where possible. Otherwise it creates a private `.venv` and installs `tools/requirements-editor.txt` there. The first installation needs internet access. It does not install Pillow into your global Python. If a copied venv belongs to a different OS, a separate `.venv-<platform>` is created instead of deleting it.
+- Windows: [official Python downloads](https://www.python.org/downloads/windows/). Install a supported Python and enable its PATH option. A registered Python launcher installation is also detected. Windows App Execution Alias stubs are skipped.
+- macOS: [official Python downloads](https://www.python.org/downloads/macos/). Install a supported Python and reopen Terminal if necessary.
+- Linux: [official Unix installation guidance](https://docs.python.org/3/using/unix.html). Use your distribution package manager to install Python 3.10+ and its matching venv/ensurepip package; on Ubuntu/Debian this is typically `python3-venv`.
 
-If Python is missing, install it from https://www.python.org/downloads/ and reopen the catalog. On Debian/Ubuntu, venv creation may require the matching `python3-venv` package. A Python installation cannot be replaced by creating a venv; the venv is created using your existing interpreter.
+**After installation, open the same startup file again.** Before loading any Python catalog code, the native startup checks executable versions. It searches multiple PATH candidates and, on Windows, the registered installed interpreter list; it skips old candidates in a mixed environment. It does not download or install Python itself. If you installed Python in a custom location not on PATH, set `KREA2_CATALOG_PYTHON` to its complete executable path.
 
-Set `KREA2_CATALOG_PYTHON` to your preferred executable, or run:
+An explicit `KREA2_CATALOG_PYTHON` or `--python` path is validated and not silently replaced. Interactive startup errors wait for Enter before closing. CI (`CI` set), redirected input/output, and `KREA2_CATALOG_NO_PAUSE` do not wait for input.
 
-```sh
-python tools/launch_catalog.py --python '<your-python-executable>'
-```
+## Private dependencies
 
-Use `python3` on macOS/Linux if necessary. Useful options are `--editor`, `--no-open`, `--port 8790`, `--force-venv`, `--resolve-only`, and `--json`. Paths are derived from the extracted files, not a fixed drive or the current working directory.
+An existing Python with Pillow 10–12 and WebP support can be reused. Otherwise the launcher creates a **new** `.catalog-venv` (or `.catalog-venv-1`, etc.) and installs Pillow there. Internet access is needed for that installation. It never runs pip in a pre-existing environment, never deletes an old `.venv`, and never installs packages globally. An incomplete environment from a failed setup is retained; another new private folder is used on retry. After a successful retry, unused failed private environments may be removed manually while the catalog is stopped.
 
-## Stop and reopen
+Useful startup arguments are `--editor`, `--no-open`, `--port 8790`, `--force-venv`, `--resolve-only`, `--stop`, and `--json`. Paths derive from the extracted files, independent of the working directory or a specific drive.
 
-Closing the browser tab keeps the catalog service available. To stop only this catalog:
+## Startup errors
 
-```sh
-python tools/launch_catalog.py --stop
-```
-
-You can also pass `--stop` to your OS startup file. Other applications and generation services are not stopped. Reopening restores saved entries, edits, visibility, favorites, and ratings.
-
-## Open image folders
-
-Windows selects the image in Explorer. macOS reveals it in Finder. Linux opens the image's parent folder using `xdg-open` when a graphical desktop is available. On a headless system the folder button is disabled; **Open original image** remains available in the browser.
+| Message / exit code | Cause and action |
+|---|---|
+| `PYTHON_MISSING` / 10 | No runnable Python found. Use the OS-specific official link, then reopen this startup file. |
+| `PYTHON_OLD` / 11 | Only an older Python found, or explicitly selected Python is below 3.10. Install/select a compatible Python, then reopen. |
+| `PYTHON_PATH` / 12 | An explicit path is missing or cannot execute. Correct or unset `KREA2_CATALOG_PYTHON` / `--python`. |
+| `VENV_MISSING` / 13 | Python lacks venv/ensurepip or cannot build a private environment. Install the matching venv package or select a complete Python installation. |
+| `WRITE_PERMISSION` / 14 | Runtime folder is not writable. Extract into a writable user folder. Editor saves can also fail because another program locks the destination; close that program and retry. Existing saved data is preserved. |
+| `PILLOW_WEBP` / 15 | Installed private dependency cannot provide Pillow 10–12 and WebP. Choose a compatible existing interpreter. |
+| `NETWORK` / 16 | Dependency download failed due to a detected connection/proxy/certificate problem. Check connectivity, then reopen. |
+| `DEPENDENCY_INSTALL` / 17 | Other dependency installation failure. Read the diagnostic and select a supported interpreter. |
 
 ## Validation scope
 
-The release workflow extracts the same complete ZIP on Windows, macOS, and Ubuntu Linux, and checks the native startup entry, service reuse, direct Editor route, WebP registration with blank text fields, editing, persistent visibility/favorites after restart, occupied-port fallback, instance-lock rejection, shutdown, and private venv dependency setup. Test reports are available in GitHub Actions. Desktop folder command selection is checked separately with mocked system calls.
+For a published v0.9.1 ZIP, see the [exact GitHub Actions run and downloadable per-OS reports linked in Release validation](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.1#release-validation). Publication requires the following tests to pass on **Windows Server 2022, macOS 15 Intel, and Ubuntu 24.04**, using Python 3.12 and a real Python 3.9 negative-test interpreter. The same built ZIP is extracted and invoked through `.cmd`, `.command`, or `.sh` respectively; the server is not the only launch entry under test.
 
-Windows browser operation is also checked manually. **Finder double-click/security prompts and Linux file-manager GUI operation have not been verified manually on a user's desktop.** Automated runtime success does not certify every macOS version, Linux distribution, extraction tool, browser, or CPU architecture. Generation-model GPU compatibility is outside these catalog checks.
+| Check | Method / scope |
+|---|---|
+| Startup, catalog and style listing, Editor startup, double startup, port conflicts, stop/restart | Distributed OS entry files; HTTP assertions and real socket conflicts. |
+| Search, image registration, editing, saving, reload | Disposable headless Chromium, on the catalog started by its OS entry file. |
+| Persisted entries/edits, hidden/favorite state after backend restart | HTTP assertions after stopping/reopening the same extracted catalog. |
+| Python unavailable, 3.9 only, mixed 3.9/3.12, invalid env and CLI paths | Controlled PATH using actual installed interpreters, and native startup files; CI has no interactive pause. |
+| Missing venv/ensurepip, download failure, WebP capability failure | External test-only `sitecustomize` fault fixtures in child interpreters; no source patch or modification of installed Python. |
+| Old 3.9 venv / incomplete existing venv | Actual old venv plus sentinel files remain unchanged; a fresh private environment is built. |
+| Japanese/spaced paths and mixed-case image extensions | Actual extraction paths and registration filenames; PNG/JPEG/WebP bytes are unchanged. |
+| Save failure protects data | Real POSIX directory permission denial or a Windows file handle preventing destination replacement. Saved file bytes and catalog values remain unchanged. |
+| Folder-command routing / no reverse DNS / file locks | Separate unit tests; native GUI commands are mocked. |
+
+**Not physically verified on macOS/Linux:** general desktop double-clicking, OS security and permission dialogs, opening the default browser, and interaction with a real Finder or Linux file manager. Headless Chromium success does not establish those behaviors. Only the listed runner OS versions/architecture and functions are automatically verified. Windows physical browser checks are separate from CI. GPU generation, every extraction utility, every distribution, and every Python 3.10+ version are not certified.
+
+## AnimaDex is separate
+
+**AnimaDex integration is optional and unverified on Linux/macOS.** It is excluded from the core catalog three-OS support claims and release tests. SQLite DB reading, image-reference matching, comparison pages, applying confirmed verdicts, case/separator differences, absolute paths, and comparison migration/rebuilding across OSes have not been exercised in this CI. Use local configuration and regenerate comparisons after changing environments. No real user DB or personal reference images are included in CI.
 
 ## 日本語
 
-Windowsは `open_review.cmd`、Macは `open_review.command` をダブルクリックします。Linuxはフォルダー内で `sh ./open_review.sh` を実行します。Macで実行権限が保持されない場合は `sh ./open_review.command` を使えます。Python 3.10以上を事前に用意し、必要な依存だけ専用venvへ導入します。
+v0.9.1の1つのZIPに3OSの起動ファイルを同梱します。Python 3.10以上は別途必要です。未導入・旧版・無効な指定・venv不足・書込権限・Pillow/WebP不足・通信失敗を区別して案内します。導入後は同じ起動ファイルを再度開いてください。旧Python・既存venvを変更せず、依存は新規専用環境にのみ導入します。
 
-3つのOSでZIPの展開・起動・登録・編集・保存復元を自動検証します。Windowsのブラウザー操作は手動確認します。MacのFinderからの起動やセキュリティ確認画面、Linuxのファイルマネージャー操作は実機での手動確認が未実施です。この区別を対応説明に残します。
+上の表は公開ZIPに対する自動試験の範囲です。Mac/Linuxの通常のデスクトップ操作とOSの警告画面・標準ブラウザー・ファイルマネージャー連携は実機未確認です。AnimaDex連携は別の任意機能で、Linux/macOSでは未検証です。

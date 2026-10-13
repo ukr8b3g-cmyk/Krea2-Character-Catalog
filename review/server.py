@@ -699,6 +699,8 @@ def make_server(root, port=8767):
                     threading.Thread(target=self.server.shutdown, daemon=True).start()
                 else:
                     self.json({"error": "Not found"}, 404)
+            except PermissionError:
+                self.json({"error": "[WRITE_PERMISSION] Could not save. Existing data is preserved. Move the catalog to a writable folder, or close applications locking the saved file, then try again."}, 400)
             except (ValueError, OSError, KeyError, TypeError) as error:
                 self.json({"error": str(error)}, 400)
 

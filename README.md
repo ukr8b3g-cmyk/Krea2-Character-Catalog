@@ -1,6 +1,6 @@
 [日本語 / Japanese](README.ja.md)
 
-**Windows, macOS, and Linux — one catalog ZIP.** Requires Python 3.10+ and a web browser. English is the default interface language.
+**v0.9.1 — Windows, macOS, and Linux startup files in one catalog ZIP.** Requires Python 3.10+ and a web browser. English is the default interface language.
 
 | Your OS | Open this file in the extracted `Krea2-Character-Catalog` folder |
 |---|---|
@@ -10,10 +10,12 @@
 
 For direct image registration, use the matching `open_editor.cmd`, `open_editor.command`, or `open_editor.sh`. All three platforms open the same local browser interface. See [platform setup and test coverage](docs/PLATFORMS.md).
 
+The published v0.9.1 ZIP is gated on Windows Server 2022, macOS 15 Intel, and Ubuntu 24.04 CI tests. See the [exact release validation run and downloadable OS reports](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.1#release-validation) and [coverage details](docs/PLATFORMS.md#validation-scope). macOS/Linux desktop double-clicking, security/permission dialogs, default-browser opening, and native file-manager integration remain **unverified on physical desktops**. AnimaDex is an optional, separate workflow.
+
 <img width="1269" height="743" alt="{604FEE72-032C-4BC9-8AA0-8E2AAB612015}" src="https://github.com/user-attachments/assets/e1904ff8-181d-4792-bb61-95b17fddf90a" />
 
 
-# Krea2 Character Catalog v0.91
+# Krea2 Character Catalog v0.9.1
 
 A local catalog of Krea2-generated character and style samples, with searchable tags, reusable prompts, and an image registration and editing tool for Windows, macOS, and Linux. **English is the default interface language.** Japanese is also available; your language choice is remembered.
 
@@ -21,11 +23,11 @@ A local catalog of Krea2-generated character and style samples, with searchable 
 
 ## Downloads and live demo
 
-- **[Download v0.91: complete catalog ZIP and rejected-workflow ZIP](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.91)**
+- **[Download v0.9.1: complete catalog ZIP and rejected-workflow ZIP](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.1)**
 - **[Latest release](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest)**
 - **[Read-only live demo](https://ukr8b3g-cmyk.github.io/Krea2-Character-Catalog/)**
 
-Download `Krea2-Character-Catalog-v0.91.zip` for the complete application. It includes the accepted images, original tag CSVs, workflow examples, and Catalog Editor. Extract it to obtain a folder named `Krea2-Character-Catalog`. Python and generation models are not bundled.
+Download `Krea2-Character-Catalog-v0.9.1.zip` for the complete application. It includes the accepted images, original tag CSVs, workflow examples, and Catalog Editor. Extract it to obtain a folder named `Krea2-Character-Catalog`. Python and generation models are not bundled.
 
 GitHub's **Code → Download ZIP** and automatic **Source code** archives contain the development source, without the image collection or full tag dataset. Use the named ZIP attached to a Release for the complete catalog. Each release keeps its own versioned downloads. `SHA256SUMS.txt` provides checksums for the two ZIPs.
 
@@ -38,7 +40,9 @@ GitHub's **Code → Download ZIP** and automatic **Source code** archives contai
 
 The preferred local address is `http://127.0.0.1:8790/`. If the port is occupied, the launcher chooses an available port and opens the actual address. It reuses an already-running service for this same catalog and does not replace other applications. The server listens only on the local PC.
 
-The launcher checks for **Python 3.10+**, **Pillow 10 to below 13**, and WebP support. It prefers an existing compatible Python. When necessary, it creates a private `.venv` using a detected Python and installs dependencies there, without installing Pillow globally. The first dependency installation needs internet access. If Python is missing, install it from [python.org](https://www.python.org/downloads/).
+The launcher checks for **Python 3.10+**, **Pillow 10 to below 13**, and WebP support. It prefers an existing compatible Python. When necessary, it creates a new private `.catalog-venv` using a detected Python and installs dependencies there, without installing Pillow globally or changing any existing venv. Old or incomplete environments are left intact. The first dependency installation needs internet access. If Python is missing or older than 3.10, use the official [Windows installer](https://www.python.org/downloads/windows/), [macOS installer](https://www.python.org/downloads/macos/), or [Linux installation guide](https://docs.python.org/3/using/unix.html). **After installation, open the same startup file again.** Each startup file checks runnable interpreter versions before loading the Python launcher, and can select a compatible version when an older Python is also installed. Invalid explicit interpreter paths are reported rather than silently ignored. Interactive error windows wait for Enter; redirected input and CI do not wait.
+
+See [distinct startup error messages and remedies](docs/PLATFORMS.md#startup-errors).
 
 To choose a specific Python, set `KREA2_CATALOG_PYTHON`, or run this from the extracted folder with your interpreter path:
 
@@ -106,9 +110,9 @@ See [Generation and registration](README_GENERATION.md) and [ComfyUI workflows](
 
 The detail panel offers **Open original image** and **Open image folder**. Where a WebP contains generation metadata, drag it into a compatible ComfyUI installation to load the workflow.
 
-In v0.91, the distribution copy removes the original PC's CSV paths from image metadata. Character workflows use the saved, resolved generation text through `manual_prompt`. Install or update the bundled `ComfyUI-Krea2-Catalog-Tools` under your ComfyUI `custom_nodes` folder and restart ComfyUI. Adjust model names and missing nodes for your environment. The compressed pixel data has not been changed. Some older images have no generation metadata, so not every image can reproduce its complete original settings.
+The distribution copy removes the original PC's CSV paths from image metadata. Character workflows use the saved, resolved generation text through `manual_prompt`. Install or update the bundled `ComfyUI-Krea2-Catalog-Tools` under your ComfyUI `custom_nodes` folder and restart ComfyUI. Adjust model names and missing nodes for your environment. The compressed pixel data has not been changed. Some older images have no generation metadata, so not every image can reproduce its complete original settings.
 
-Rejected images and blank rejected cards are excluded from the catalog ZIP. Their regeneration JSONs are available separately as **`Krea2-Character-Catalog-Rejected-Workflows-v0.91.zip`**. Of these, 13,486 are based on saved generation metadata, and 11 older entries are editable templates without original metadata. Running a rejected recipe does not guarantee an accepted result. You can use the recipes without adding rejected images back to the catalog.
+Rejected images and blank rejected cards are excluded from the catalog ZIP. Their regeneration JSONs are available separately as **`Krea2-Character-Catalog-Rejected-Workflows-v0.9.1.zip`**. Of these, 13,486 are based on saved generation metadata, and 11 older entries are editable templates without original metadata. Running a rejected recipe does not guarantee an accepted result. You can use the recipes without adding rejected images back to the catalog.
 
 ## Simplified live demo
 
@@ -121,6 +125,8 @@ See [Building the static demo](docs/LIVE_DEMO.md).
 ## Optional AnimaDex comparison
 
 The layout and organization of this catalog were inspired by [AnimaDex](https://animadex.net/). Normal registration and editing do not require AnimaDex or Codex.
+
+**AnimaDex integration is optional and unverified on Linux/macOS. It is excluded from the core catalog's three-OS verification.** Database reading, reference-image matching, comparison pages, confirmed verdict application, and moving comparison paths/settings between OSes are not covered by the release CI.
 
 For optional comparisons, install both catalogs locally and use the supplied [krea2-animadex-review skill](skills/krea2-animadex-review/SKILL.md). Configure paths and ports for your own environment, reusing an existing AnimaDex installation. See [Comparison setup and applying decisions](docs/COMPARISON_SKILL.md).
 

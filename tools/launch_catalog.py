@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -71,44 +72,76 @@ def environment_python(folder):
     return folder / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
 
 
+class RuntimeIssue(RuntimeError):
+    def __init__(self, code, category, message):
+        super().__init__('[' + category + '] ' + message)
+        self.code = code
+
+
+def writable(folder):
+    try:
+        folder.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryFile(dir=folder):
+            pass
+    except PermissionError as error:
+        raise RuntimeIssue(14, 'WRITE_PERMISSION', 'This folder is not writable: ' + str(folder) + '. Extract the catalog to your own writable folder; existing data was not replaced.') from error
+
+
 def resolve_python(root, preferred=None, force_venv=False):
-    candidates = [preferred, os.environ.get('KREA2_CATALOG_PYTHON'),
-                  read_json(root / 'outputs/python_runtime.json').get('python'),
+    explicit = preferred or os.environ.get('KREA2_CATALOG_PYTHON')
+    if explicit:
+        if not Path(explicit).is_file():
+            raise RuntimeIssue(12, 'PYTHON_PATH', 'The specified Python path is invalid. Correct --python / KREA2_CATALOG_PYTHON, or unset it.')
+        try:
+            probe = subprocess.run([explicit, '-c', 'import sys; sys.exit(0 if sys.version_info >= (3,10) else 11)'], capture_output=True, timeout=20)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise RuntimeIssue(12, 'PYTHON_PATH', 'The specified Python cannot run. Correct or unset its path.') from error
+        if probe.returncode == 11:
+            raise RuntimeIssue(11, 'PYTHON_OLD', 'The specified Python is older than 3.10. Install a supported version and reopen the startup file.')
+        if probe.returncode:
+            raise RuntimeIssue(12, 'PYTHON_PATH', 'The specified Python cannot run. Correct or unset its path.')
+    candidates = [explicit, read_json(root / 'outputs/python_runtime.json').get('python'),
                   str(environment_python(root / '.venv')), sys.executable,
                   shutil.which('python3'), shutil.which('python')]
-    if os.name == 'nt':
-        launcher = shutil.which('py')
-        if launcher:
-            found = subprocess.run([launcher, '-3', '-c', 'import sys; print(sys.executable)'], capture_output=True, text=True)
-            if found.returncode == 0:
-                candidates.append(found.stdout.strip())
+    candidates += [str(environment_python(p)) for p in sorted(root.glob('.catalog-venv*')) if p.is_dir()]
     base = None
     for candidate in dict.fromkeys(p for p in candidates if p):
         if not check_python(candidate):
             continue
         if base is None:
-            base = str(Path(candidate).resolve())
+            base = str(Path(candidate).absolute())
         if not force_venv and check_python(candidate, dependencies=True):
             return str(Path(candidate).absolute())
     if base is None:
-        raise RuntimeError('Python 3.10+ was not found. Install Python from https://www.python.org/downloads/ and reopen the catalog, or set KREA2_CATALOG_PYTHON to its executable.')
-    folder = root / '.venv'
+        raise RuntimeIssue(10, 'PYTHON_MISSING', 'Python 3.10+ was not found. Install Python and reopen the startup file. See docs/PLATFORMS.md.')
+    supported = subprocess.run([base, '-c', 'import venv, ensurepip'], capture_output=True, text=True)
+    if supported.returncode:
+        raise RuntimeIssue(13, 'VENV_MISSING', 'This Python lacks venv or ensurepip. Install the matching venv package (e.g. python3-venv on Ubuntu/Debian), or choose another complete Python installation. Existing environments were not changed.')
+    writable(root)
+    # Never repair or install dependencies into a pre-existing environment.
+    folder = root / '.catalog-venv'
+    number = 1
+    while folder.exists():
+        folder = root / ('.catalog-venv-' + str(number))
+        number += 1
+    print('Preparing a new private Python environment: ' + folder.name, file=sys.stderr, flush=True)
+    result = subprocess.run([base, '-m', 'venv', str(folder)], capture_output=True, text=True)
+    if result.returncode:
+        if 'Permission denied' in result.stderr or 'Access is denied' in result.stderr:
+            raise RuntimeIssue(14, 'WRITE_PERMISSION', 'Cannot create the private environment. Extract the catalog to a writable folder.')
+        raise RuntimeIssue(13, 'VENV_MISSING', 'Could not create a private venv. Check that the matching venv/ensurepip package is installed. ' + result.stderr[-1200:])
     executable = environment_python(folder)
-    if folder.exists() and not executable.is_file():
-        folder = root / ('.venv-' + sys.platform)
-        executable = environment_python(folder)
-    if not executable.is_file():
-        print('Preparing a private Python environment...', file=sys.stderr, flush=True)
-        result = subprocess.run([base, '-m', 'venv', str(folder)], stdout=sys.stderr, stderr=sys.stderr)
-        if result.returncode:
-            raise RuntimeError('Could not create a private venv. Check write permissions and that your Python includes venv (on Ubuntu/Debian, install the matching python3-venv package).')
+    print('Installing Pillow in this new environment (internet required)...', file=sys.stderr, flush=True)
+    result = subprocess.run([str(executable), '-m', 'pip', 'install', '--disable-pip-version-check', '--retries', '1', '--timeout', '15', '--index-url', 'https://pypi.org/simple', '-r', str(root / 'tools/requirements-editor.txt')], capture_output=True, text=True)
+    if result.returncode:
+        detail = (result.stdout + result.stderr)[-6000:]
+        if any(term in detail.lower() for term in ('connection', 'network', 'proxyerror', 'timed out', 'certificate_verify', 'name resolution', 'sslerror')):
+            raise RuntimeIssue(16, 'NETWORK', 'Pillow download failed. Check internet/proxy/certificate settings, then reopen the startup file. Existing Python environments were not changed. ' + detail[-1000:])
+        if 'Permission denied' in detail or 'Access is denied' in detail:
+            raise RuntimeIssue(14, 'WRITE_PERMISSION', 'The new environment is not writable. Move the catalog to your writable folder.')
+        raise RuntimeIssue(17, 'DEPENDENCY_INSTALL', 'Pillow installation failed for a reason other than a detected network failure. Select a Python with Pillow 10–12 and WebP. ' + detail[-1000:])
     if not check_python(executable, dependencies=True):
-        print('Installing Pillow in the private environment (internet required)...', file=sys.stderr, flush=True)
-        result = subprocess.run([str(executable), '-m', 'pip', 'install', '--disable-pip-version-check', '--index-url', 'https://pypi.org/simple', '-r', str(root / 'tools/requirements-editor.txt')], stdout=sys.stderr, stderr=sys.stderr)
-        if result.returncode:
-            raise RuntimeError('Could not install Pillow. Check internet access or use an existing Python with Pillow and WebP support.')
-    if not check_python(executable, dependencies=True):
-        raise RuntimeError('The private Python does not support Pillow 10–12 and WebP. Select a compatible Python installation.')
+        raise RuntimeIssue(15, 'PILLOW_WEBP', 'Pillow 10–12 with WebP support is unavailable in the new environment. Choose a compatible Python with WebP support. Existing environments were not changed.')
     return str(executable)
 
 
@@ -137,6 +170,7 @@ def launch(args):
     root = args.root.resolve()
     if not (root / 'review/server.py').is_file() or not (root / 'VERSION').is_file():
         raise RuntimeError('Run the launcher from the fully extracted catalog folder.')
+    writable(root / 'outputs')
     with CatalogLock(root / 'outputs/launcher.lock', timeout=180):
         if args.stop:
             return stop_service(root, args.port)
@@ -207,8 +241,10 @@ def main():
         print(json.dumps(result,ensure_ascii=True) if args.json else result.get('url', result.get('python', 'Catalog stopped.')),flush=True)
         return 0
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
+        if isinstance(error, PermissionError):
+            error = RuntimeIssue(14, 'WRITE_PERMISSION', 'Cannot write catalog runtime files. Extract to a writable folder; existing data is preserved.')
         print('Krea2 Catalog: ' + str(error),file=sys.stderr,flush=True)
-        return 1
+        return getattr(error, 'code', 1)
 
 
 if __name__ == '__main__':

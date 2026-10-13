@@ -1,5 +1,7 @@
 # 任意のAnimaDex比較連携
 
+**Scope: optional AnimaDex integration; Linux/macOS are unverified.** Core catalog CI does not exercise SQLite DB loading, reference image matching, comparison pages, confirmed-verdict application, or cross-OS relocation/rebuilding of comparison artifacts. Configure paths locally and regenerate comparison material after moving environments. No personal DB or images are used in release CI.
+
 通常の画像追加・情報編集はカタログとEditorでできます。AnimaDexを使った比較が必要な場合だけ、同梱の [krea2-animadex-review](../skills/krea2-animadex-review/SKILL.md) をCodex等へ導入します。キャラクター比較用のスキルで、スタイルは別の参照形式を確認してから扱います。
 
 ## 導入と環境設定

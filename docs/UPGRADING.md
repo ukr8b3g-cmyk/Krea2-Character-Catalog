@@ -13,4 +13,4 @@
 
 ブラウザー内の表示条件・入力途中の下書きは、そのブラウザーとローカルアドレスに属します。別PCや別ポートへ移る前に入力を保存・確定してください。
 
-`.venv`、`outputs/python_runtime.json`、`outputs/review_service.json`、ログは移行しません。新版のOSに対応した `open_review.cmd`・`open_review.command`・`open_review.sh` が、新しい場所でPythonとサービスを確認します。空の追加JSONで初期カタログ全体を置き換える処理はありません。
+`.venv`、`.catalog-venv*`、`outputs/python_runtime.json`、`outputs/review_service.json`、ログは移行しません。新版のOSに対応した `open_review.cmd`・`open_review.command`・`open_review.sh` が、新しい場所でPythonとサービスを確認します。空の追加JSONで初期カタログ全体を置き換える処理はありません。

@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: Publish v0.91 after all OS tests pass
+        description: Publish v0.9.1 after all OS tests pass
         type: boolean
         default: false
         required: true
@@ -48,10 +48,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, macos-15, ubuntu-24.04]
+        os: [windows-2022, macos-15-intel, ubuntu-24.04]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        id: old-python
+        with:
+          python-version: '3.9'
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -60,11 +64,13 @@ jobs:
           name: catalog-release-candidate
           path: dist
       - name: Install test image support
-        run: python -m pip install -r tools/requirements-editor.txt
+        run: |
+          python -m pip install -r tools/requirements-editor.txt playwright==1.63.0
+          python -m playwright install --with-deps chromium
       - name: Verify native locks and folder routing
         run: python -B -m unittest discover -s tests -v
       - name: Test the complete ZIP on this OS
-        run: python -B tests/check_archive_runtime.py --archive dist/Krea2-Character-Catalog-v0.91.zip --report reports/${{ matrix.os }}.json --test-venv
+        run: python -B tests/check_archive_runtime.py --archive dist/Krea2-Character-Catalog-v0.9.1.zip --report reports/${{ matrix.os }}.json --test-venv --old-python "${{ steps.old-python.outputs.python-path }}" --browser-test
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -89,12 +95,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view v0.91 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo 'v0.91 already exists. Refusing to replace an existing release.' >&2
+          if gh release view v0.9.1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'v0.9.1 already exists. Refusing to replace an existing release.' >&2
             exit 1
           fi
           (cd dist && sha256sum -c SHA256SUMS.txt)
-          gh release create v0.91 dist/Krea2-Character-Catalog-v0.91.zip dist/Krea2-Character-Catalog-Rejected-Workflows-v0.91.zip dist/SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title 'Krea2 Character Catalog v0.91 — Windows, macOS, Linux' --notes-file docs/RELEASE_v0.91.md --latest
+          cp docs/RELEASE_v0.9.1.md release-notes.md
+          printf '\n### Release validation\n\n[Exact tested ZIP: all three OS jobs and reports](https://github.com/%s/actions/runs/%s).\n' "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> release-notes.md
+          gh release create v0.9.1 dist/Krea2-Character-Catalog-v0.9.1.zip dist/Krea2-Character-Catalog-Rejected-Workflows-v0.9.1.zip dist/SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title 'Krea2 Character Catalog v0.9.1 — Windows, macOS, Linux' --notes-file release-notes.md --latest
 
   deploy-demo:
     needs: publish
@@ -118,7 +126,7 @@ jobs:
       - name: Build the read-only demo from the tested ZIP
         run: |
           python -m pip install -r tools/requirements-editor.txt
-          python -c "import sys; from pathlib import Path; sys.path.insert(0,'tools'); from package_release import safe_extract; safe_extract('dist/Krea2-Character-Catalog-v0.91.zip',Path('demo-release'))"
+          python -c "import sys; from pathlib import Path; sys.path.insert(0,'tools'); from package_release import safe_extract; safe_extract('dist/Krea2-Character-Catalog-v0.9.1.zip',Path('demo-release'))"
           python tools/build_static_demo.py --root demo-release/Krea2-Character-Catalog --dest "$RUNNER_TEMP/catalog-site" --download-url "https://github.com/${GITHUB_REPOSITORY}/releases/latest"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4

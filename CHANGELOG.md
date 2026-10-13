@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.1 — 2026-10-13
+
+- Formal semantic version; v0.9 and v0.91 published downloads are retained.
+- Native startup verifies Python 3.10+ before importing catalog code, selects compatible mixed installations, and provides OS-specific installation guidance without CI input waits.
+- Explicit path, venv, permission, Pillow/WebP, and download errors are distinguished. Existing interpreters and virtual environments are never modified by dependency setup.
+- Release CI expands real ZIP/startup coverage to Python 3.9/mixed installations, dependency faults, Unicode/case-sensitive filenames, PNG/JPEG/WebP preservation, headless browser search/edit/save, and data protection on write failure.
+- AnimaDex Linux/macOS support remains unverified and separate from core catalog support. Physical Mac/Linux desktop integration remains unverified.
+
 ## v0.91 — 2026-10-13
 
 - One catalog ZIP for Windows, macOS, and Linux, with OS-specific Catalog and Editor startup files.

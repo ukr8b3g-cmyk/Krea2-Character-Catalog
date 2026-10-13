@@ -14,3 +14,5 @@ outputs/user_comparison_decisions.json
 outputs/user_items/
 _site/
 *.zip
+
+.catalog-venv*/
