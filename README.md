@@ -97,7 +97,7 @@ Rejected images and blank rejected cards are excluded from the catalog ZIP. Thei
 
 The GitHub Pages site is a **simplified read-only demo, not the full application**. It displays prebuilt static data and **does not run the catalog's Python backend**. Its features and saving behavior differ from the local ZIP application.
 
-Try searching, filtering, sorting, character/style switching, enlarging images, and copying prompts. Public data cannot be deleted, hidden, registered, or edited. Mutation controls and save APIs are absent. Use the local ZIP application to add your own images or change information. Demo display preferences are stored only in your own browser.
+Try searching, filtering, sorting, character/style switching, enlarging images, and copying prompts. Public data cannot be deleted, hidden, registered, or edited. Mutation controls and save APIs are absent. Use the local ZIP application to add your own images or change information. The online demo opens on **Characters** each time, even after a previous Styles session. Other demo display preferences are stored only in your own browser. The local application can remember its last tab.
 
 See [Building the static demo](docs/LIVE_DEMO.md).
 
