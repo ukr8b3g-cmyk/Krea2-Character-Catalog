@@ -245,6 +245,59 @@ def check_browser(base,api,catalog,workspace,checks):
             expect(page.locator('#name')).to_have_value('WORKFLOW REMOVED')
             expect(page.locator('#existing-workflow')).to_be_hidden()
             checks.append('chromium_remove_json_register_reopen_remains_removed')
+
+            # Normal user controls must reach bulk restoration of hidden cards.
+            page.goto(base);page.locator('#search').fill('AUTO_BETA')
+            expect(page.locator('#grid .card')).to_have_count(1)
+            page.locator('#select-visible').click();page.locator('#delete-selected').click()
+            expect(page.locator('#grid .card')).to_have_count(0)
+            page.locator('#hidden-only').click();expect(page.locator('#grid .card')).to_have_count(1)
+            expect(page.locator('#grid .pick input')).to_be_visible()
+            page.locator('#select-visible').click();expect(page.locator('#restore-selected')).to_be_enabled()
+            expect(page.locator('#delete-selected')).to_be_disabled()
+            page.locator('#restore-selected').click();expect(page.locator('#grid .card')).to_have_count(0)
+            page.locator('#hidden-only').click();expect(page.locator('#grid .card')).to_have_count(1)
+            checks.append('chromium_hidden_selection_bulk_restore_normal_controls')
+
+            tagged=api('/api/editor/add',{'operation_id':str(uuid.uuid4()),'filename':'tagged.png','name':'TAG SEARCH',
+                       'copy_tags':'1girl, red_hair, blue_eyes, UNIQUE_RAW_TAG',
+                       'image_base64':base64.b64encode(png((117,33,55))).decode()})
+            record=api('/api/editor/record?'+urllib.parse.urlencode({'key':tagged['key']}))['record']
+            assert record['facets']['gender']==['Female'] and record['facets']['hairColor']==['red hair']
+            page.reload();page.locator('#search').fill('UNIQUE_RAW_TAG')
+            expect(page.locator('#grid .card')).to_have_count(1)
+            checks.append('chromium_raw_tag_search_and_unprefixed_facets')
+
+            # Build actual static data with conflicting original artist metadata.
+            style=api('/api/editor/add',{'operation_id':str(uuid.uuid4()),'filename':'edited style.png','kind':'style',
+                      'name':'Old style','image_base64':base64.b64encode(png((139,71,21))).decode()})
+            record=api('/api/editor/record?'+urllib.parse.urlencode({'key':style['key']}))['record']
+            api('/api/editor/edit',{'key':style['key'],'image_sha256':record['image_sha256'],
+                                   'fields':{'name':'Corrected style','copy_tags':'CORRECTED_STYLE_TAG'}})
+            page.goto(base+'/?tab=styles');page.locator('#tab-styles').click()
+            page.locator('#search').fill('CORRECTED_STYLE_TAG');expect(page.locator('#grid .card')).to_have_count(1)
+            expect(page.locator('#grid .card')).to_contain_text('Corrected style')
+            listing=api('/api/list');record=next(r for r in listing['entries'] if r['key']==style['key'])
+            listing['style_candidates'].append({'id':record['id'],'name':'Original artist name','copy_tags':'ORIGINAL_STYLE_TAG','artist_metadata_revision':'1'})
+            sys.path.insert(0,str(SOURCE/'tools'))
+            from build_static_demo import build
+            from server import ReviewStore
+            with patch.object(ReviewStore,'list',return_value=listing):build(catalog,workspace/'demo')
+            data=json.loads((workspace/'demo/catalog.json').read_text(encoding='utf-8'))
+            exported=next(r for r in data['entries'] if r['key']==record['key'])
+            assert exported['user_edited'] and exported['copy_tags']==record['copy_tags']
+            from http.server import SimpleHTTPRequestHandler,ThreadingHTTPServer
+            from functools import partial
+            static=ThreadingHTTPServer(('127.0.0.1',0),partial(SimpleHTTPRequestHandler,directory=str(workspace/'demo')))
+            worker=threading.Thread(target=static.serve_forever,daemon=True);worker.start()
+            try:
+                demo=browser.new_page();demo.goto('http://127.0.0.1:'+str(static.server_port))
+                demo.locator('#tab-styles').click();demo.locator('#search').fill('CORRECTED_STYLE_TAG')
+                expect(demo.locator('#grid .card')).to_have_count(1)
+                expect(demo.locator('#grid .card')).to_contain_text('Corrected style')
+                demo.close()
+            finally:static.shutdown();worker.join(5);static.server_close();assert not worker.is_alive()
+            checks.append('chromium_local_static_edited_style_name_tags_agree')
         finally:browser.close()
 
 

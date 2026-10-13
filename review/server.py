@@ -39,7 +39,9 @@ def tag_facets(record):
     tags = list(dict.fromkeys(part.strip().replace("_", " ").lower() for part in record["copy_tags"].split(",")))
     result = {"character": [record["name"].split(" (", 1)[0]], "copyright": [record["copyright"]],
               "hairColor": [], "hairLength": [], "eyeColor": [], "gender": [], "outfit": []}
-    for tag in tags[2:]:
+    identities = {str(record.get(field, '')).strip().replace('_', ' ').lower() for field in ('name', 'copyright')}
+    for tag in tags:
+        if tag in identities: continue
         if re.fullmatch(r"(black|white|blonde|blond|brown|red|blue|purple|pink|green|grey|gray|orange|silver|aqua|multicolored) hair", tag):
             result["hairColor"].append(tag)
         elif tag in {"short hair", "long hair", "very long hair", "medium hair", "bald"}:
@@ -400,13 +402,19 @@ class ReviewStore:
             if kind == "style":
                 fields += ["source_style_id", "category", "name_jp"]
             path = self.outputs / ("review_styles_selection.csv" if kind == "style" else "review_selection.csv")
-            with path.open("w", encoding="utf-8-sig", newline="") as handle:
-                writer = csv.DictWriter(handle, fieldnames=fields)
-                writer.writeheader()
-                for entry in entries:
-                    row = {field: entry.get(field, "") for field in fields}
-                    row.update(entry["files"])
-                    writer.writerow(row)
+            temporary = path.with_name(path.name + '.' + secrets.token_hex(8) + '.tmp')
+            try:
+                with temporary.open("w", encoding="utf-8-sig", newline="") as handle:
+                    writer = csv.DictWriter(handle, fieldnames=fields)
+                    writer.writeheader()
+                    for entry in entries:
+                        row = {field: entry.get(field, "") for field in fields}
+                        row.update({field: value for field, value in entry["files"].items() if field in fields})
+                        writer.writerow(row)
+                    handle.flush(); os.fsync(handle.fileno())
+                os.replace(temporary, path)
+            finally:
+                temporary.unlink(missing_ok=True)
             return {"count": len(entries), "file": str(path)}
 
 

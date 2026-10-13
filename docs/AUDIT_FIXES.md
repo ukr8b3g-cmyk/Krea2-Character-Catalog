@@ -23,6 +23,14 @@ An independent audit identified two additional conditions in the initial fix. `C
 
 Optional node metadata is type-checked before use. A valid image with a save node whose `inputs` is null, a list, or another non-dictionary value can still be inspected and registered with prompt text unset. Invalid node type values are treated as unsupported metadata. No broad exception handler suppresses real image corruption or I/O failures. Regression tests include real PNG metadata and actual HTTP inspection/registration, preserving original bytes.
 
+## Catalog consistency follow-up — October 14, 2026
+
+CSV export limits image-file fields to the declared columns and replaces the existing CSV only after a complete temporary write. Workflow attachments no longer introduce unknown CSV columns. Failure leaves the previous CSV intact.
+
+Hidden cards can be selected and restored together using ordinary page controls. Hide and restore act on the selected visible/hidden subsets respectively. Appearance facets inspect tags independently of their position, excluding exact name/copyright identities; text search includes original tags. Static demo records retain the `user_edited` marker so original artist metadata cannot overwrite manual style corrections.
+
+Regression tests cover workflow-bearing exports and failed replacement, unprefixed appearance tags, browser bulk restore and tag search, and matching edited style names/tags in real local and generated static pages. These changes do not redeploy the public demo or replace Release assets.
+
 ## 日本語
 
 4件の修正と回帰試験はmain向けです。公開済みv0.9.1のZIP・タグ・チェックサム・ライブデモは上書きしません。修正版の配布は別のRelease作業になります。
