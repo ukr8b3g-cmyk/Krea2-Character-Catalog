@@ -62,6 +62,14 @@ def include_source(path):
     return path.parts[0] in ('.github','comfyui','docs','lists','review','skills','tools') or len(path.parts) == 1
 
 
+def checked_version(source):
+    version = (source/'VERSION').read_text(encoding='utf-8-sig').strip()
+    metadata = json.loads((source/'VERSION.json').read_text(encoding='utf-8-sig'))
+    if metadata.get('version') != version or metadata.get('tag') != 'v'+version:
+        raise ValueError('VERSION and VERSION.json disagree; do not package this source.')
+    return version
+
+
 def build(source, destination, base, rejected):
     source = source.resolve()
     destination = destination.resolve()
@@ -69,7 +77,7 @@ def build(source, destination, base, rejected):
         raise ValueError('Use a separate output folder or the ignored dist folder.')
     if digest(base) != BASE_SHA or digest(rejected) != REJECTED_SHA:
         raise ValueError('The saved v0.9 data has changed.')
-    version = (source/'VERSION').read_text(encoding='utf-8-sig').strip()
+    version = checked_version(source)
     if version != '0.9.1':
         raise ValueError('This build recipe requires version 0.9.1.')
     entries = {}

@@ -97,7 +97,7 @@ def prepare(env,output,copyright=''):
     assets=Path(__file__).resolve().parent.parent/'assets'
     for name in ['index.html','compare.js','compare.css']:shutil.copy2(assets/name,output/name)
     return dict(stats)
-def validated_decisions(env,review_dir,decisions):
+def validated_decisions(env,review_dir,decisions,selected_keys=None):
     payload=read(Path(review_dir)/'pairs.json')
     if Path(payload['environment']['catalog_root']).resolve()!=Path(env['catalog_root']).resolve() or Path(payload['environment']['thumbs_root']).resolve()!=Path(env['thumbs_root']).resolve():raise ValueError('Review belongs to a different environment.')
     source=read(decisions)
@@ -108,16 +108,38 @@ def validated_decisions(env,review_dir,decisions):
     for row in source['decisions']:
         if row.get('selected') is not True or row.get('confirmed') is not True or row.get('decision') in {'hold',None}:continue
         if row.get('decision') not in {'match','mismatch'}:raise ValueError('Unknown decision.')
-        key=row.get('key');p=pairs.get(key);record=records.get(key)
+        key=row.get('key')
+        if selected_keys is not None and key not in selected_keys:continue
+        p=pairs.get(key);record=records.get(key)
         if not p or not record or record['image_sha256']!=row.get('catalog_image_sha256') or row.get('reference_image_sha256')!=p['reference_image_sha256']:raise ValueError('Decision or catalog no longer matches this pair.')
         generated=safe_path(Path(env['catalog_root'])/'outputs',record['files']['image']);reference=safe_path(env['thumbs_root'],str(Path(p['reference_image']).relative_to(Path(env['thumbs_root']))))
         if sha(generated)!=p['catalog_image_sha256'] or sha(reference)!=p['reference_image_sha256']:raise ValueError('An image changed; compare again before applying.')
         if key in chosen and chosen[key]['decision']!=row['decision']:raise ValueError('Conflicting selected decisions.')
         chosen[key]={**row,'reference_slug':p['reference_slug']}
     return list(chosen.values()),listing
+def visibility_plan(rows,listing):
+    records={r['key']:r for r in listing['entries']}
+    plan={'restore':[],'hide':[],'unchanged':[]}
+    for row in rows:
+        hidden=bool(records[row['key']]['hidden'])
+        route='restore' if hidden and row['decision']=='match' else 'hide' if not hidden and row['decision']=='mismatch' else 'unchanged'
+        plan[route].append(row['key'])
+    return plan
+
+def write_json(path,value):
+    path=Path(path);temporary=path.with_suffix(path.suffix+'.tmp')
+    try:
+        temporary.write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+        os.replace(temporary,path)
+    finally:temporary.unlink(missing_ok=True)
+
 def apply(env,review_dir,decisions,dry_run=False):
+    decision_digest=sha(decisions)
     rows,listing=validated_decisions(env,review_dir,decisions)
-    result={'selected_confirmed':len(rows),'match':sum(r['decision']=='match' for r in rows),'mismatch':sum(r['decision']=='mismatch' for r in rows),'dry_run':dry_run}
+    if sha(decisions)!=decision_digest:raise ValueError('Decision export changed during validation; retry the dry run.')
+    plan=visibility_plan(rows,listing)
+    result={'selected_confirmed':len(rows),'match':sum(r['decision']=='match' for r in rows),'mismatch':sum(r['decision']=='mismatch' for r in rows),'dry_run':dry_run,
+            'visibility_changes':len(plan['restore'])+len(plan['hide']),'unchanged':len(plan['unchanged']),'plan':plan}
     if dry_run or not rows:return result
     root=Path(env['catalog_root']);review_dir=Path(review_dir).resolve()
     if review_dir.is_relative_to(root):raise ValueError('Keep snapshots outside the catalog.')
@@ -127,18 +149,32 @@ def apply(env,review_dir,decisions,dry_run=False):
     for name in ['review_state.json','user_comparison_decisions.json']:
         source=root/'outputs'/name
         if source.is_file():shutil.copy2(source,snapshot/name)
-    checkpoint={'applied':[],'selected':rows,'result':result}
-    for decision,route in [('match','restore'),('mismatch','hide')]:
-        keys=[r['key'] for r in rows if r['decision']==decision]
+    checkpoint={'applied':[],'selected':rows,'result':result,'completed':False}
+    checkpoint_path=review_dir/'apply-checkpoint.json'
+    write_json(checkpoint_path,checkpoint)
+    for route in ['restore','hide']:
+        keys=plan[route]
         for start in range(0,len(keys),100):
-            batch=keys[start:start+100];api(env['catalog_url'],'/api/'+route,{'keys':batch},listing['token']);checkpoint['applied']+=batch
-            (review_dir/'apply-checkpoint.json').write_text(json.dumps(checkpoint,ensure_ascii=False,indent=2),encoding='utf-8')
-    now={r['key']:r for r in api(env['catalog_url'],'/api/list')['entries']}
+            if sha(decisions)!=decision_digest:raise ValueError('Decision export changed; inspect the checkpoint before retry.')
+            batch=keys[start:start+100]
+            current_rows,current_listing=validated_decisions(env,review_dir,decisions,set(batch))
+            batch=visibility_plan(current_rows,current_listing)[route]
+            if batch:
+                api(env['catalog_url'],'/api/'+route,{'keys':batch},current_listing['token'])
+                checkpoint['applied']+=batch
+                write_json(checkpoint_path,checkpoint)
+    if sha(decisions)!=decision_digest:raise ValueError('Decision export changed; inspect the checkpoint before retry.')
+    verified_rows,verified_listing=validated_decisions(env,review_dir,decisions)
+    now={r['key']:r for r in verified_listing['entries']}
     for row in rows:
         if bool(now[row['key']]['hidden'])!=(row['decision']=='mismatch'):raise ValueError('Visibility verification failed. Inspect the checkpoint before retry.')
     merged={(r['key'],r.get('catalog_image_sha256','')):r for r in previous['decisions']}
-    for row in rows:merged[(row['key'],row['catalog_image_sha256'])]={**row,'decided_at':datetime.datetime.now(datetime.timezone.utc).isoformat()}
-    temporary=path.with_suffix('.json.tmp');temporary.write_text(json.dumps({**previous,'decisions':list(merged.values())},ensure_ascii=False,indent=2),encoding='utf-8');os.replace(temporary,path)
+    for row in verified_rows:
+        identity=(row['key'],row['catalog_image_sha256']);old=merged.get(identity,{})
+        unchanged=all(old.get(key)==row.get(key) for key in ['decision','reference_slug','reference_image_sha256','selected','confirmed'])
+        merged[identity]={**row,'decided_at':old.get('decided_at') if unchanged and old.get('decided_at') else datetime.datetime.now(datetime.timezone.utc).isoformat()}
+    write_json(path,{**previous,'decisions':list(merged.values())})
+    checkpoint['completed']=True;write_json(checkpoint_path,checkpoint)
     result['verified']=True;result['snapshot']=str(snapshot);return result
 def serve(review_dir,port):
     root=Path(review_dir).resolve();payload=read(root/'pairs.json');pairs=payload['pairs'];env=payload['environment']

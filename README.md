@@ -2,6 +2,8 @@
 
 **v0.9.1 — Windows, macOS, and Linux startup files in one catalog ZIP.** Requires Python 3.10+ and a web browser. English is the default interface language.
 
+**Development status (main):** This branch includes [comparison-skill and Editor audit fixes](docs/AUDIT_FIXES.md) that are not yet included in the published v0.9.1 ZIP. Existing Release assets and the live demo remain unchanged.
+
 | Your OS | Open this file in the extracted `Krea2-Character-Catalog` folder |
 |---|---|
 | Windows | Double-click `open_review.cmd`. |
@@ -19,7 +21,7 @@ The published v0.9.1 ZIP is gated on Windows Server 2022, macOS 15 Intel, and Ub
 
 A local catalog of Krea2-generated character and style samples, with searchable tags, reusable prompts, and an image registration and editing tool for Windows, macOS, and Linux. **English is the default interface language.** Japanese is also available; your language choice is remembered.
 
-**This catalog is incomplete and provisional.** Selection was based on visual comparisons, including color, shape, and overall impression. Some images were retained because they looked similar, rather than being exact reproductions. We could not thoroughly check every image by hand. Characters, names, tags, and styles may be wrong, and generated results may be inappropriate. Please recheck the downloaded collection and correct, hide, edit, or regenerate entries as needed. Corrections and suggestions are welcome.
+**This catalog is incomplete and provisional.** I personally reviewed all roughly 17,000 candidates and made every final selection decision. AI assistance was tried on a small subset, but those results were checked by me too; no entry was accepted solely on an AI judgment. I am not familiar with every character, and some were provisionally retained based on color, shape, and overall resemblance after checking references. Manual review does not guarantee accuracy or prove that a character appeared in the model's training data. Names, tags, likenesses, and styles may be wrong. The review took over a week, and another complete pass is not practical for me alone. Please recheck your local collection and report mistakes with the character/style name and catalog version. Corrections and suggestions are welcome.
 
 ## Downloads and live demo
 
@@ -105,6 +107,16 @@ The existing original-tag CSV uses **`tag,category,count,insert_mode`**. The `ta
 For backup or moving to another PC, copy the entire catalog folder. Extract upgrades into a separate folder, keep the old version, and transfer your added images, edits, and review state. See [Updating and backup](docs/UPGRADING.md).
 
 ## Generate and regenerate
+
+The character and style samples were generated in ComfyUI. The saved API metadata in **3,913 of the 3,919 included images** records the same model, text encoder, and VAE below. All six included character/style workflow JSONs use this combination. The remaining six older images lack API metadata, so their original loader settings could not be confirmed from the images.
+
+| Component | Recorded filename / setting |
+|---|---|
+| Krea2 Turbo model | `krea2_turbo_int8_convrot.safetensors` (workflow model folder: `krea2`) |
+| Text encoder | `qwen3vl_4b_fp8_scaled.safetensors`, CLIP type `krea2` |
+| VAE | `qwen_image_vae.safetensors` |
+
+These are the filenames recorded in the workflows, including the quantized model/encoder variants used for this collection. Model weights are not bundled. Inspect the [character workflow](comfyui/workflows/Krea2%20Catalog%20Thumbnails.json) and [style workflow](comfyui/workflows/Krea2%20Style%20Catalog%20Dedicated.json), and adjust loader filenames for your own ComfyUI installation. These metadata checks establish the recorded generation setup; they do not establish that a character was present in the model's training data.
 
 See [Generation and registration](README_GENERATION.md) and [ComfyUI workflows](comfyui/README.md) for the models, settings, examples, and required nodes. Set up your own generation environment, render an image, then register it through the Editor.
 

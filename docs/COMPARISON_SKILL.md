@@ -31,7 +31,7 @@ python scripts/review.py apply --config "../private/review-config.json" --review
 python scripts/review.py apply --config "../private/review-config.json" --review-dir "../private/review-001" --decisions "../private/confirmed-comparison-decisions.json"
 ```
 
-まずdry-runの件数を確認します。反映時は両画像のSHAを再確認し、変更された画像や別カタログへの反映を拒否します。現在の選別状態を作業フォルダーへ退避し、合格は表示、不合格は非表示にします。画像を物理削除しません。既存のお気に入り・星評価・元タグ・画像・生成記録は保持します。空の判定ファイルでカタログ全体を初期化しません。
+まずdry-runで、表示変更が必要な件数と変更不要の件数を確認します。表示中の合格・非表示中の不合格は表示APIを呼ばず、確定判定の記録だけ保存します。反映時は両画像のSHAを再確認し、変更された画像や別カタログへの反映を拒否します。現在の選別状態を作業フォルダーへ退避し、合格は表示、不合格は非表示にします。画像を物理削除しません。既存のお気に入り・星評価・元タグ・画像・生成記録は保持します。空の判定ファイルでカタログ全体を初期化しません。
 
 確定履歴は `outputs/user_comparison_decisions.json` に保存し、次の比較準備では同じ画像の判定済み分を除外します。反映途中で問題が起きた場合は作業フォルダーの `apply-checkpoint.json` とスナップショットを確認し、現在の状態を読んでから再実行します。生成ジョブを止める必要はありません。
 

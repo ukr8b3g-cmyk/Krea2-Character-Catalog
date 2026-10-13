@@ -7,6 +7,8 @@ on:
       - 'review/**'
       - 'tools/**'
       - 'tests/**'
+      - 'skills/**'
+      - 'comfyui/**'
       - 'open_*'
       - 'VERSION*'
       - 'README*'
@@ -71,6 +73,8 @@ jobs:
         run: python -B -m unittest discover -s tests -v
       - name: Test the complete ZIP on this OS
         run: python -B tests/check_archive_runtime.py --archive dist/Krea2-Character-Catalog-v0.9.1.zip --report reports/${{ matrix.os }}.json --test-venv --old-python "${{ steps.old-python.outputs.python-path }}" --browser-test
+      - name: Test comparison and metadata contracts from the distributed ZIP
+        run: python -B tests/check_audit_contracts.py --archive dist/Krea2-Character-Catalog-v0.9.1.zip --report reports/audit-${{ matrix.os }}.json --browser-test
       - uses: actions/upload-artifact@v4
         if: always()
         with:

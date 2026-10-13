@@ -65,6 +65,8 @@ For a published v0.9.1 ZIP, see the [exact GitHub Actions run and downloadable p
 
 ## AnimaDex is separate
 
+The development branch adds [audit regression tests](AUDIT_FIXES.md) using a temporary SQLite DB, fictitious image pairs, the real catalog HTTP API, and headless Editor operations. These run against the candidate ZIP on each CI OS. This limited contract coverage does not certify a real AnimaDex installation, the comparison page's desktop behavior, or relocation of prepared absolute paths between OSes. It is separate from the tests of the already published v0.9.1 ZIP.
+
 **AnimaDex integration is optional and unverified on Linux/macOS.** It is excluded from the core catalog three-OS support claims and release tests. SQLite DB reading, image-reference matching, comparison pages, applying confirmed verdicts, case/separator differences, absolute paths, and comparison migration/rebuilding across OSes have not been exercised in this CI. Use local configuration and regenerate comparisons after changing environments. No real user DB or personal reference images are included in CI.
 
 ## 日本語

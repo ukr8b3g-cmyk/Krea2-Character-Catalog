@@ -16,6 +16,7 @@ import unicodedata
 import uuid
 from PIL import Image
 from runtime_support import reveal_image
+from prompt_metadata import positive_prompt
 
 MAX_IMAGE = 64 * 1024 * 1024
 FIELDS = ('name', 'copyright', 'copy_prompt', 'copy_tags', 'kind')
@@ -79,7 +80,7 @@ def inspect_image(data):
             image.load()
             extension, mime = FORMATS[image.format]
             exif, info = image.getexif(), image.info
-            stored = parsed(exif.get(315), 'krea2_catalog_prompts:') or {}
+            stored = parsed(info.get('krea2_catalog_prompts')) or parsed(exif.get(315), 'krea2_catalog_prompts:') or {}
             record = stored.get('record', stored) if isinstance(stored, dict) else {}
             if not isinstance(record, dict): record = {}
             workflow = parsed(info.get('workflow')) or parsed(exif.get(305), 'workflow:')
@@ -89,10 +90,8 @@ def inspect_image(data):
             try: actual = actual.encode('latin1').decode('utf-8')
             except (UnicodeError, AttributeError): pass
             api = parsed(info.get('prompt')) or parsed(exif.get(271), 'prompt:')
-            if not actual and isinstance(api, dict):
-                for node in api.values():
-                    text = node.get('inputs', {}).get('text') if isinstance(node, dict) else None
-                    if isinstance(text, str): actual = text; break
+            resolved = positive_prompt(api, stored)
+            if resolved is not None: actual = resolved
             metadata = {key:record[key] for key in ('name','copyright','copy_prompt','copy_tags') if isinstance(record.get(key), str)}
             if 'copy_prompt' not in metadata and actual: metadata['copy_prompt'] = actual
             return {'extension':extension,'mime':mime,'width':image.width,'height':image.height,'generation_prompt':actual,
@@ -192,7 +191,8 @@ class EditorCatalog:
             except (ValueError,TypeError): raise ValueError('保存JSONが不正です。JSONを外すか選び直してください。') from None
         # An explicit null means the user chose not to attach a workflow.
         if 'workflow' not in payload: workflow = details['workflow']
-        signature = hashlib.sha256(json.dumps([details['image_sha256'],fields,workflow],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
+        workflow_mode = 'auto' if 'workflow' not in payload else 'removed' if workflow is None else 'explicit'
+        signature = hashlib.sha256(json.dumps([details['image_sha256'],fields,workflow,workflow_mode],ensure_ascii=False,sort_keys=True).encode()).hexdigest()
         with self.lock:
             catalog = self.read_items()
             for item in catalog['items']:
@@ -224,7 +224,7 @@ class EditorCatalog:
                 item={**fields,'id':uid,'image_format':extension,'image_mime':details['mime'],
                       'source_filename':filename.replace('\\','/').rsplit('/',1)[-1],
                       'image_sha256':details['image_sha256'],'files':files,'added_at':utc(),'updated_at':utc(),
-                      'generation_prompt':details['generation_prompt'],
+                      'generation_prompt':details['generation_prompt'],'workflow_mode':workflow_mode,
                       'operation_id':operation_id,'request_digest':signature}
                 catalog['items'].append(item)
                 atomic_json(self.catalog_file,catalog)
@@ -257,6 +257,7 @@ class EditorCatalog:
         return {'saved':True,'key':record['key'],'image_sha256':record['image_sha256']}
 
     def workflow(self, record):
+        if record.get('workflow_mode') == 'removed': return None
         relative = record['files'].get('workflow')
         if relative:
             path=self.path(relative)
