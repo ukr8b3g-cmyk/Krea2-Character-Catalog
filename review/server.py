@@ -424,6 +424,7 @@ class ReviewStore:
 
 
 def make_server(root, port=8767):
+    print('Loading catalog records...',flush=True)
     store = ReviewStore(root)
     token = secrets.token_urlsafe(24)
     instance = secrets.token_hex(8)
@@ -692,6 +693,7 @@ def make_server(root, port=8767):
             except (ValueError, OSError, KeyError, TypeError) as error:
                 self.json({"error": str(error)}, 400)
 
+    print('Binding local HTTP socket...',flush=True)
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     server.store = store
     server.token = token

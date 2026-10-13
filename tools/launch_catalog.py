@@ -169,6 +169,10 @@ def launch(args):
                     raise RuntimeError('The catalog could not start. See outputs/review_server.err.log for the cause.')
                 time.sleep(0.15)
             else:
+                saved = read_json(root / 'outputs/review_service.json')
+                print('Startup diagnostic: ' + json.dumps({'service':saved,'root':str(root),'child_running':child.poll() is None},ensure_ascii=True),file=sys.stderr)
+                for name in ('review_server.log','review_server.err.log'):
+                    print(name + ': ' + (outputs/name).read_text(encoding='utf-8',errors='replace')[-3000:],file=sys.stderr)
                 if child.poll() is None:
                     child.terminate()
                     child.wait(timeout=10)
