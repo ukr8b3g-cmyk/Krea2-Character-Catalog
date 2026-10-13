@@ -1,6 +1,7 @@
 [English](./README.md)
 
-![Uploading {604FEE72-032C-4BC9-8AA0-8E2AAB612015}.png…]()
+<img width="1269" height="743" alt="{604FEE72-032C-4BC9-8AA0-8E2AAB612015}" src="https://github.com/user-attachments/assets/f4878143-6a91-4529-917e-c9bdce45d322" />
+
 
 
 # Krea2 Character Catalog v0.9
