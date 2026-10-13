@@ -31,11 +31,12 @@ def write_json(path,value):
     path.write_text(json.dumps(value,ensure_ascii=False,indent=2),encoding='utf-8')
 
 
-def png(color, name=None, workflow=None):
+def png(color, name=None, workflow=None, prompt=None):
     info=PngImagePlugin.PngInfo()
     if name:
         info.add_text('krea2_catalog_prompts',json.dumps({'record':{'name':name,'copyright':name+' WORK','copy_prompt':name+' PROMPT','copy_tags':name+' TAGS'}}))
     if workflow is not None:info.add_text('workflow',json.dumps(workflow))
+    if prompt is not None:info.add_text('prompt',json.dumps(prompt))
     stream=io.BytesIO();Image.new('RGB',(19,23),color).save(stream,'PNG',pnginfo=info)
     return stream.getvalue()
 
@@ -159,6 +160,29 @@ def run(archive,report_path,browser_test=False,code_root=None):
                 assert detail['workflow_available']==available
                 assert (catalog/'outputs'/detail['record']['files']['image']).read_bytes()==raw
             checks.append('workflow_auto_removed_explicit_actual_api_original_bytes')
+
+            for second,expected in [('POSITIVE','POSITIVE'),('DIFFERENT','')]:
+                prompt={
+                    'positive':{'class_type':'CLIPTextEncode','inputs':{'text':'POSITIVE'}},
+                    'second':{'class_type':'CLIPTextEncode','inputs':{'text':second}},
+                    'concat':{'class_type':'ConditioningConcat','inputs':{'conditioning_to':['positive',0],'conditioning_from':['second',0]}},
+                    'sampler':{'class_type':'KSampler','inputs':{'positive':['concat',0]}},
+                    'decode':{'class_type':'VAEDecode','inputs':{'samples':['sampler',0]}},
+                    'save':{'class_type':'SaveImage','inputs':{'images':['decode',0]}},
+                }
+                details=api('/api/editor/inspect',{'image_base64':base64.b64encode(png((47,59,71),prompt=prompt)).decode()})
+                assert details['generation_prompt']==expected
+            checks.append('concat_core_inputs_same_text_resolved_different_text_unset_actual_api')
+
+            for value in [None,[],42,'invalid']:
+                raw=png((83,97,109),prompt={'save':{'class_type':'SaveImage','inputs':value}})
+                payload={'image_base64':base64.b64encode(raw).decode()}
+                details=api('/api/editor/inspect',payload)
+                assert details['generation_prompt']=='' and details['mime']=='image/png'
+                saved=api('/api/editor/add',{'operation_id':str(uuid.uuid4()),'filename':'Invalid optional metadata.PnG',**payload})
+                record=api('/api/editor/record?'+urllib.parse.urlencode({'key':saved['key']}))['record']
+                assert record['generation_prompt']=='' and (catalog/'outputs'/record['files']['image']).read_bytes()==raw
+            checks.append('invalid_optional_metadata_actual_http_inspect_register_original_bytes')
 
             if browser_test:
                 check_browser(base,api,catalog,workspace,checks)

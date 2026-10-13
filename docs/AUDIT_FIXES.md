@@ -17,6 +17,12 @@ The test report distinguishes synthetic AnimaDex contracts from a real AnimaDex 
 
 [Main workflow runs and downloadable reports](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/actions/workflows/release.yml)
 
+## Prompt-parser follow-up
+
+An independent audit identified two additional conditions in the initial fix. `ConditioningConcat` now follows Core's `conditioning_to`/`conditioning_from` inputs, while `ConditioningCombine` keeps `conditioning_1`/`conditioning_2`. Identical text resolves; differing text remains unset instead of being guessed or merged.
+
+Optional node metadata is type-checked before use. A valid image with a save node whose `inputs` is null, a list, or another non-dictionary value can still be inspected and registered with prompt text unset. Invalid node type values are treated as unsupported metadata. No broad exception handler suppresses real image corruption or I/O failures. Regression tests include real PNG metadata and actual HTTP inspection/registration, preserving original bytes.
+
 ## 日本語
 
 4件の修正と回帰試験はmain向けです。公開済みv0.9.1のZIP・タグ・チェックサム・ライブデモは上書きしません。修正版の配布は別のRelease作業になります。

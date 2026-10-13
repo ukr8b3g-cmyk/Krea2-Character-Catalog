@@ -38,6 +38,35 @@ class MetadataTests(unittest.TestCase):
     def test_negative_order_does_not_choose_negative(self):
         self.assertEqual(inspect_image(png(graph()))['generation_prompt'], 'POSITIVE_SENTINEL')
 
+    def test_combine_and_concat_use_core_input_names_without_merging_different_text(self):
+        for kind,names in [('ConditioningCombine',('conditioning_1','conditioning_2')),
+                           ('ConditioningConcat',('conditioning_to','conditioning_from'))]:
+            for second,expected in [('POSITIVE_SENTINEL','POSITIVE_SENTINEL'),('DIFFERENT','')]:
+                with self.subTest(kind=kind,second=second):
+                    api=graph()
+                    api['second']={'class_type':'CLIPTextEncode','inputs':{'text':second}}
+                    api['combined']={'class_type':kind,'inputs':{names[0]:['positive',0],names[1]:['second',0]}}
+                    api['sampler']['inputs']['positive']=['combined',0]
+                    self.assertEqual(inspect_image(png(api))['generation_prompt'],expected)
+
+    def test_invalid_optional_node_inputs_do_not_block_valid_image(self):
+        for value in [None,[],['images'],42,'invalid']:
+            with self.subTest(inputs=value):
+                raw=png({'save':{'class_type':'SaveImage','inputs':value}})
+                details=inspect_image(raw)
+                self.assertEqual(details['mime'],'image/png')
+                self.assertEqual(details['generation_prompt'],'')
+                self.assertEqual((details['width'],details['height']),(13,17))
+
+    def test_invalid_optional_node_types_do_not_block_valid_image(self):
+        for kind in [None,[],{'name':'SaveImage'},42]:
+            with self.subTest(kind=kind):
+                details=inspect_image(png({'save':{'class_type':kind,'inputs':{}}}))
+                self.assertEqual(details['generation_prompt'],'')
+
+    def test_invalid_image_is_still_rejected(self):
+        with self.assertRaises(ValueError):inspect_image(b'not a PNG image')
+
     def test_real_node_snapshot_is_read_from_png(self):
         location = ROOT/'comfyui/custom_nodes/ComfyUI-Krea2-Catalog-Tools/nodes.py'
         spec = importlib.util.spec_from_file_location('audit_prompt_node', location)

@@ -18,6 +18,10 @@ def positive_prompt(api, snapshots):
 
     nodes = {str(key): value for key, value in api.items() if isinstance(value, dict)}
 
+    def node_type(node):
+        value = node.get('class_type')
+        return value if isinstance(value, str) else None
+
     def link(value):
         if isinstance(value, list) and len(value) == 2 and isinstance(value[0], (str, int)) and isinstance(value[1], int):
             return str(value[0]), value[1]
@@ -34,7 +38,7 @@ def positive_prompt(api, snapshots):
             return None
         node_id, slot = target
         node = nodes.get(node_id, {})
-        kind, inputs = node.get('class_type'), node.get('inputs', {})
+        kind, inputs = node_type(node), node.get('inputs', {})
         if not isinstance(inputs, dict):
             return None
         seen = seen | {(target, mode)}
@@ -58,8 +62,10 @@ def positive_prompt(api, snapshots):
                 return ''
             if kind in {'ConditioningSetArea', 'ConditioningSetAreaPercentage', 'ConditioningSetTimestepRange'}:
                 return follow('conditioning')
-            if kind in {'ConditioningCombine', 'ConditioningConcat'}:
+            if kind == 'ConditioningCombine':
                 return common([follow('conditioning_1'), follow('conditioning_2')])
+            if kind == 'ConditioningConcat':
+                return common([follow('conditioning_to'), follow('conditioning_from')])
             return None
         if kind in {'KSampler', 'KSamplerAdvanced', 'SamplerCustom'}:
             return follow('positive', 'conditioning')
@@ -77,9 +83,13 @@ def positive_prompt(api, snapshots):
             return follow('image', 'image')
         return None
 
-    saves = [node for node in nodes.values() if node.get('class_type') in SAVERS]
+    saves = [node for node in nodes.values() if node_type(node) in SAVERS]
     if saves:
-        return common([resolve(node.get('inputs', {}).get('images'), 'image') for node in saves])
+        values = []
+        for node in saves:
+            inputs = node.get('inputs')
+            values.append(resolve(inputs.get('images'), 'image') if isinstance(inputs, dict) else None)
+        return common(values)
     # Without a save node, accept only an unambiguous sampler-positive result.
     return common([resolve([node_id, 0], 'image') for node_id, node in nodes.items()
-                   if node.get('class_type') in SAMPLERS])
+                   if node_type(node) in SAMPLERS])
