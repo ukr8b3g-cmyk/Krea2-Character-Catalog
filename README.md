@@ -1,134 +1,130 @@
+[日本語 / Japanese](README.ja.md)
+
 # Krea2 Character Catalog v0.9
 
-Krea2で生成したキャラクターとスタイルの見本を、検索・比較しながらプロンプトや元タグと一緒に使うためのローカルカタログです。Windows向けの画像追加・編集ツールも含みます。
+A local catalog of Krea2-generated character and style samples, with searchable tags, reusable prompts, and an image registration and editing tool for Windows. **English is the default interface language.** Japanese is also available; your language choice is remembered.
 
-**このカタログは Incomplete / 不完全です。** 名前や作品との対応、色・形・雰囲気を目視で確認していますが、似ているという理由で残したものもあります。全画像を人間が十分に確認できたものではなく、生成結果が適切でない画像や、誤ったキャラクター・作風も含まれる可能性があります。キャラクター・スタイルとも暫定です。ダウンロード後も利用者自身で再確認し、必要に応じて編集・非表示・再生成して修正してください。修正や改善の報告を歓迎します。
+**This catalog is incomplete and provisional.** Selection was based on visual comparisons, including color, shape, and overall impression. Some images were retained because they looked similar, rather than being exact reproductions. We could not thoroughly check every image by hand. Characters, names, tags, and styles may be wrong, and generated results may be inappropriate. Please recheck the downloaded collection and correct, hide, edit, or regenerate entries as needed. Corrections and suggestions are welcome.
 
-## ダウンロードとライブデモ
+## Downloads and live demo
 
-- **[v0.9のZIPと不合格再生成用JSON](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9)**
-- **[最新版のRelease](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest)**
-- **[閲覧用ライブデモ](https://ukr8b3g-cmyk.github.io/Krea2-Character-Catalog/)**
+- **[Download v0.9: complete catalog ZIP and rejected-workflow ZIP](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9)**
+- **[Latest release](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest)**
+- **[Read-only live demo](https://ukr8b3g-cmyk.github.io/Krea2-Character-Catalog/)**
 
-通常はReleaseの `Krea2-Character-Catalog-v0.9.zip` をダウンロードしてください。合格として残した画像・元タグCSV・ワークフロー見本・Editorをまとめて含みます。展開すると `Krea2-Character-Catalog` フォルダーができます。Python本体と生成モデルは同梱していません。
+Download `Krea2-Character-Catalog-v0.9.zip` for the complete application. It includes the accepted images, original tag CSVs, workflow examples, and Catalog Editor. Extract it to obtain a folder named `Krea2-Character-Catalog`. Python and generation models are not bundled.
 
-GitHubの **Code → Download ZIP / Source code** は開発用ソースです。画像を含む完成したカタログはReleaseの上記ZIPにあります。各バージョンのReleaseから、その版のZIPを引き続きダウンロードできます。
+GitHub's **Code → Download ZIP** and automatic **Source code** archives contain the development source, without the image collection or full tag dataset. Use the named ZIP attached to a Release for the complete catalog. Each release keeps its own versioned downloads. `SHA256SUMS.txt` provides checksums for the two ZIPs.
 
-## すぐに使う
+## Quick start
 
-1. ZIPをすべて展開します。ZIPの中から直接実行しないでください。
-2. `open_review.cmd` をダブルクリックします。
-3. ブラウザーでカタログが開きます。キャラクター／スタイルを切り替え、名前・作品・外見タグで絞り込めます。
-4. 画像をクリックすると詳細が開き、Krea2用プロンプトや元タグをコピーできます。
+1. Extract the entire ZIP. Do not run it from inside the archive.
+2. Double-click `open_review.cmd`.
+3. Switch between **Characters** and **Styles**, and search or filter by name, copyright, or appearance tags.
+4. Click an image to enlarge it and copy its reusable Krea2 prompt or original tags.
 
-初期アドレスは `http://127.0.0.1:8790/` です。使用中なら空いているポートを選び、実際のアドレスをブラウザーで開きます。別のアプリを停止・置換しません。同じカタログが起動済みならそのサービスを再利用します。公開インターネットに待ち受けを作らず、ローカルPCで使います。
+The preferred local address is `http://127.0.0.1:8790/`. If the port is occupied, the launcher chooses an available port and opens the actual address. It reuses an already-running service for this same catalog and does not replace other applications. The server listens only on the local PC.
 
-Python **3.10以上**とPillow **10以上13未満・WebP対応**を確認します。利用できる既存Pythonを優先し、必要なら検出したPythonで専用 `.venv` を作ります。システム全体へPillowを追加しません。初回の依存導入にはインターネット接続が必要です。Python本体がない場合は、[Python公式サイト](https://www.python.org/downloads/windows/)から用意してください。
+The launcher checks for **Python 3.10+**, **Pillow 10 to below 13**, and WebP support. It prefers an existing compatible Python. When necessary, it creates a private `.venv` using a detected Python and installs dependencies there, without installing Pillow globally. The first dependency installation needs internet access. If Python is missing, install it from [python.org](https://www.python.org/downloads/windows/).
 
-特定のPythonを使う場合は `KREA2_CATALOG_PYTHON` 環境変数を設定するか、フォルダー内で次を実行します。
+To choose a specific Python, set `KREA2_CATALOG_PYTHON`, or run this from the extracted folder with your interpreter path:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/open_review.ps1 -Python "C:\Python\python.exe"
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/open_review.ps1 -Python '<your-python-executable>'
 ```
 
-検索条件・表示設定・ページ位置はブラウザーへ、非表示・お気に入り・星評価はローカルファイルへ保存します。同じカタログを再び開くと保存済み状態を使います。ZIPに個人のお気に入り・星評価・入力途中の下書きは含めていません。
+Search filters, language, display settings, and page position are saved in your browser. Hidden entries, favorites, and star ratings are saved locally. The download starts without personal favorites, ratings, or editor drafts.
 
-## カタログの操作
+## Using the catalog
 
-画像を選択してまとめて非表示にできます。**非表示は画像ファイルの削除ではありません。** 「非表示一覧」「再表示」やUndoで戻せます。Undoは直前の非表示操作をまとめて戻します。非表示を除く一覧はCSV、非表示の一覧はTXTに保存できます。作品順は現在の条件に該当する件数の多い順です。
+Select images to hide them together. **Hide does not delete the image file.** Use **Hidden list**, **Show again**, or **Undo** to restore visibility. Undo restores the entire previous hide operation. Export the visible catalog as CSV or the hidden list as TXT. Copyright sorting orders groups by the number of matches under the current filters.
 
-詳しい操作は [カタログとEditorの使い方](review/README.md)を参照してください。
+See [Catalog and Editor usage](review/README.md) for the controls and saved-state behavior.
 
-## 自分の画像を追加・編集する
+## Add and edit your own images
 
-**Krea2 Catalog Editor** は、自分で生成した画像を登録し、名前・作品・再利用プロンプト・タグを整えるための標準ツールです。画像の生成やAIによる自動合否判定は行いません。
+**Krea2 Catalog Editor** registers your generated images and lets you organize their name, copyright/category, reusable prompt, and tags. It does not generate images or automatically judge them.
 
-1. カタログ上部の「画像を追加」、または `open_editor.cmd` を開きます。
-2. 画像を選択・ドロップします。**WebP推奨**、PNG・JPEGにも対応します。1枚64MBまでです。
-3. 必要な情報だけ入力し、「登録」を押します。
+1. Click **Add image** at the top of the catalog, or launch `open_editor.cmd`.
+2. Choose or drop an image. **WebP is recommended**; PNG and JPEG are supported. Maximum size: 64 MB per image.
+3. Enter only the information you need, then click **Register**.
 
-画像だけでも登録できます。名前・作品・プロンプト・タグはすべて任意です。空欄の名前にはファイル名、作品には「未分類」を使います。入力欄が空だから登録できない、という仕様ではありません。選んだ画像はカタログへコピーし、再圧縮しません。
+An image alone is enough. Every text field is optional. A blank name uses the filename, and a blank copyright uses **Unclassified**. The original file is copied without recompression.
 
-「CSV・保存JSON（任意）」では、同梱CSVや自分のCSVから候補を検索できます。未知のCSVでは列の対応を選べます。CSVを選ぶだけで勝手に登録しません。JSONなしでも登録でき、不要なJSONは外せます。同じ画像がある場合は、既存項目を使うか別項目として追加するか確認します。
+Expand **CSV / workflow JSON (optional)** to search the supplied CSVs or your own CSV. For unfamiliar CSVs, choose the column mapping. Selecting a CSV does not register anything automatically. Workflow JSON is optional and can be removed. If the image already exists, choose the existing entry or explicitly add a separate entry.
 
-登録済みカードの詳細パネルで「編集」を押すと、そのパネル内の情報を直せます。
+Click a registered card to open its information panel, then click **Edit** to change its information inside that panel.
 
-|操作|動作|
+| Control | Result |
 |---|---|
-|登録／緑の「変更を保存」|入力内容をカタログへ確定します。|
-|青の「閉じる（入力を残す）」／Esc|下書きを残して閉じます。未保存の変更は確定しません。|
-|オレンジの「キャンセル（変更を破棄）」|未保存の入力と下書きを消し、保存済みの情報へ戻ります。|
-|「入力欄を空にする」|文字欄だけを空にして、編集を続けます。|
+| **Register** / green **Save changes** | Saves the inputs to the catalog. |
+| Blue **Close (keep draft)** / Esc | Closes while keeping a draft. Unsaved changes are not applied. |
+| Orange **Cancel (discard changes/inputs)** | Discards unsaved inputs and the draft; saved information remains. |
+| **Clear text fields** | Clears only the text fields and continues editing. |
 
-変更した項目だけを別ファイルに保存します。空の追加ファイルで既存カタログ全体をクリアしません。画像・元の生成記録・非表示・お気に入り・星評価は保持します。
+Edits are saved separately and affect only changed fields. An empty registration file does not clear the existing catalog. Original images, generation records, visibility, favorites, and ratings are preserved.
 
-## 画像・タグ・保存場所
+## Files and storage
 
-|場所|内容|
+| Location inside the extracted folder | Contents |
 |---|---|
-|`outputs/staging/<run>/images/`|同梱した合格画像、コピー用プロンプト、元タグ。|
-|`outputs/staging/<run>/generation_manifest.json`|同梱画像と情報の対応。|
-|`outputs/user_items/<uuid>/`|Editorで追加した画像と任意JSON。|
-|`outputs/user_catalog.json`|追加した項目。|
-|`outputs/user_catalog_edits.json`|既存項目の編集内容。|
-|`outputs/review_state.json`|自分の非表示・お気に入り・星評価。|
-|`original_tags/anima_characters.csv`|既存のキャラクター元タグCSV。|
-|`original_tags/styles/selected_all_styles.csv`|スタイル候補のCSV。|
-|`comfyui/workflows/`|ComfyUI用の共通ワークフロー見本。|
-|`lists/`|今回の合格・不合格一覧と件数。|
+| `outputs/staging/<run>/images/` | Included accepted images, reusable prompts, and original tags. |
+| `outputs/staging/<run>/generation_manifest.json` | Links between included images and their records. |
+| `outputs/user_items/<uuid>/` | Images and optional JSON added through the Editor. |
+| `outputs/user_catalog.json` | Added entries. |
+| `outputs/user_catalog_edits.json` | Changes to existing entries. |
+| `outputs/review_state.json` | Your hidden entries, favorites, and star ratings. |
+| `original_tags/anima_characters.csv` | Existing original character-tag CSV, included in the complete Release ZIP. |
+| `original_tags/styles/selected_all_styles.csv` | Optional style suggestions, included in the complete Release ZIP. |
+| `comfyui/workflows/` | Shared ComfyUI workflow examples. |
+| `lists/` | Accepted/rejected name and copyright lists, and review counts. |
 
-元タグCSVの列は `tag,category,count,insert_mode` です。`tag` の先頭にキャラクター名・作品名、続いて外見などのタグがあります。生成用サンプル `comfyui/inputs/thumbnail_prompts.csv` は `id,prompt` で、元タグCSVとは別の形式です。コピー用プロンプト、元タグ、実際の生成文は区別しています。
+The existing original-tag CSV uses **`tag,category,count,insert_mode`**. The `tag` field begins with character and copyright identities, followed by appearance tags. The generation input example, `comfyui/inputs/thumbnail_prompts.csv`, instead uses **`id,prompt`**. Reusable prompts, original tags, and the actual generation prompt serve different purposes.
 
-バックアップ・PC移行ではカタログフォルダーごとコピーしてください。更新版は別フォルダーに展開し、旧版を保持してから、追加項目・編集内容・選別状態を移してください。詳細は [更新とバックアップ](docs/UPGRADING.md)を参照してください。
+For backup or moving to another PC, copy the entire catalog folder. Extract upgrades into a separate folder, keep the old version, and transfer your added images, edits, and review state. See [Updating and backup](docs/UPGRADING.md).
 
-## 生成・再生成
+## Generate and regenerate
 
-[生成・追加の説明](README_GENERATION.md)と [ComfyUIのワークフロー](comfyui/README.md)を用意しています。使用モデル・解像度・ステップ等も記載しています。自分の環境で必要なモデル・ノードを用意し、出力した画像をEditorで登録してください。
+See [Generation and registration](README_GENERATION.md) and [ComfyUI workflows](comfyui/README.md) for the models, settings, examples, and required nodes. Set up your own generation environment, render an image, then register it through the Editor.
 
-詳細パネルの「元画像を開く」「画像の場所を開く」から、生成情報を持つWebPを取り出せます。対応するComfyUIへドラッグ＆ドロップするとワークフローを読み込めます。
+The detail panel offers **Open original image** and **Show image in folder**. Where a WebP contains generation metadata, drag it into a compatible ComfyUI installation to load the workflow.
 
-v0.9では、配布コピーのメタデータから元PCのCSVパスを外しました。キャラクター画像のCSVノードは、保存済みの生成文を `manual_prompt` として直接使います。同梱の `ComfyUI-Krea2-Catalog-Tools` を利用者のComfyUIの `custom_nodes` に置き、ComfyUIを再起動してください。モデル名や不足ノードは各自の環境に合わせます。元の画像の圧縮画素データは変更していません。古い画像など生成情報のない例もあり、すべての画像で条件が完全復元できるわけではありません。
+In v0.9, the distribution copy removes the original PC's CSV paths from image metadata. Character workflows use the saved, resolved generation text through `manual_prompt`. Install or update the bundled `ComfyUI-Krea2-Catalog-Tools` under your ComfyUI `custom_nodes` folder and restart ComfyUI. Adjust model names and missing nodes for your environment. The compressed pixel data has not been changed. Some older images have no generation metadata, so not every image can reproduce its complete original settings.
 
-不合格画像はカタログ・ZIPに含めていません。再生成用JSONは別の `Krea2-Character-Catalog-Rejected-Workflows-v0.9.zip` です。13,486件は保存された生成情報に基づき、旧版11件は元情報がない編集用テンプレートです。不合格のJSONを実行しても合格を保証するものではありません。画像やブランクのカードを本体へ復活させずに、必要なレシピだけを使えます。
+Rejected images and blank rejected cards are excluded from the catalog ZIP. Their regeneration JSONs are available separately as **`Krea2-Character-Catalog-Rejected-Workflows-v0.9.zip`**. Of these, 13,486 are based on saved generation metadata, and 11 older entries are editable templates without original metadata. Running a rejected recipe does not guarantee an accepted result. You can use the recipes without adding rejected images back to the catalog.
 
-## 簡易ライブデモ
+## Simplified live demo
 
-GitHub Pagesのデモは**閲覧用の簡易版であり、フル機能版ではありません。** カタログのPythonバックエンドを使わず、生成済みの静的データを表示します。ZIP版とは機能・保存動作が異なります。
+The GitHub Pages site is a **simplified read-only demo, not the full application**. It displays prebuilt static data and **does not run the catalog's Python backend**. Its features and saving behavior differ from the local ZIP application.
 
-検索・絞り込み・並べ替え・キャラクター／スタイル切替・拡大・コピーを試せます。公開データの削除・非表示・登録・編集はできず、その操作ボタンや保存APIもありません。自分の画像の追加・情報修正にはローカルZIP版を使います。デモの表示条件は利用者自身のブラウザー内だけに保存します。
+Try searching, filtering, sorting, character/style switching, enlarging images, and copying prompts. Public data cannot be deleted, hidden, registered, or edited. Mutation controls and save APIs are absent. Use the local ZIP application to add your own images or change information. Demo display preferences are stored only in your own browser.
 
-[静的デモの作成方法](docs/LIVE_DEMO.md)も同梱しています。
+See [Building the static demo](docs/LIVE_DEMO.md).
 
-## 任意のAnimaDex比較連携
+## Optional AnimaDex comparison
 
-画面構成・情報の整理方法は [AnimaDex](https://animadex.net/)を参考にしています。通常の登録・編集にAnimaDexやCodexは不要です。
+The layout and organization of this catalog were inspired by [AnimaDex](https://animadex.net/). Normal registration and editing do not require AnimaDex or Codex.
 
-AnimaDexとの比較が必要な場合は、両方をローカルへ用意し、任意の [krea2-animadex-reviewスキル](skills/krea2-animadex-review/SKILL.md)を使えます。固定のPCパス・ポートを使わず、自分の環境設定で既存インストールを再利用します。詳細は [導入・比較・判定反映](docs/COMPARISON_SKILL.md)を参照してください。
+For optional comparisons, install both catalogs locally and use the supplied [krea2-animadex-review skill](skills/krea2-animadex-review/SKILL.md). Configure paths and ports for your own environment, reusing an existing AnimaDex installation. See [Comparison setup and applying decisions](docs/COMPARISON_SKILL.md).
 
-AIは候補を提案し、人間が最後に判断します。選択して確定した合格・不合格だけを反映し、未選択・保留・空データは既存状態を変更しません。名前だけで参照を決めず、CSV識別タグと両画像の一致を確認します。スキルの照合処理そのものはAIの目視判定ではありません。現在の比較アダプターはキャラクター用で、スタイルの参照対応は別途確認が必要です。
+AI suggests candidates; a human makes the final decision. Only selected, confirmed pass/fail decisions are applied. Unselected, held, or empty data does not alter existing catalog state. References are matched using CSV identity tags and both images, rather than a name alone. Identity matching by the skill is not itself AI visual judgment. The current comparison adapter supports characters; style references need separate handling.
 
-## 合否一覧とチェック件数
+## Review lists and counts
 
-|対象|合格|不合格|確認対象総数|
+| Type | Accepted | Rejected | Candidates checked |
 |---|---:|---:|---:|
-|キャラクター|3,809|13,122|16,931|
-|スタイル|110|375|485|
-|合計|3,919|13,497|17,416|
+| Characters | 3,809 | 13,122 | 16,931 |
+| Styles | 110 | 375 | 485 |
+| **Total** | **3,919** | **13,497** | **17,416** |
 
-- [キャラクター合格一覧](lists/character-pass.csv)
-- [キャラクター不合格一覧](lists/character-fail.csv)
-- [スタイル合格一覧](lists/style-pass.csv)
-- [スタイル不合格一覧](lists/style-fail.csv)
-- [件数データ](lists/summary.json)
+- [Accepted characters](lists/character-pass.csv)
+- [Rejected characters](lists/character-fail.csv)
+- [Accepted styles](lists/style-pass.csv)
+- [Rejected styles](lists/style-fail.csv)
+- [Counts as JSON](lists/summary.json)
 
-件数は今回の現行カタログに対応する画像候補単位です。同一キャラクターの衣装違いなどは別候補になり、以前の廃止・重複スタイル見本はこの集計に含みません。保留・未判定は今回の対象では0件です。「合格」は暫定的な選別結果で、正確な再現の保証ではありません。
+Counts refer to image candidates in the current reviewed set. Alternate outfits can be separate candidates. Retired or duplicate older style samples are excluded. There are no held or undecided candidates in this release scope. **Accepted means provisionally selected, not guaranteed accurate reproduction.** CSV lists contain names and copyrights/categories; internal record IDs and image hashes are omitted from these human-readable lists.
 
-スタイルの確認では、Pixiv・Danbooruに掲載される絵師の作風が再現されにくい例が多く、有名な漫画家・イラストレーターの一部には似た例がありました。これはこのカタログでの観察であり、モデルの学習データの収録有無を確定したものではありません。
+In these style checks, many artist styles associated with Pixiv or Danbooru were difficult to reproduce, while some well-known manga artists and illustrators had similar results. This is an observation from this catalog, not evidence establishing which artists were present in the model's training data.
 
-キャラクター・作品・モデル・第三者のタグデータ等の権利は各権利者に帰属します。必要な利用条件は各提供元を確認してください。誤った名前・タグ・生成結果を見つけたら、対象名と版を添えてIssuesから報告できます。
-
-## English quick start
-
-Download **Krea2-Character-Catalog-v0.9.zip** from [Releases](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest), extract it, then double-click `open_review.cmd`. A working Python 3.10+ is reused; a private virtual environment is created when needed. The catalog supports Japanese and English UI. Add your own WebP, PNG or JPEG with the standard Editor; all text fields are optional.
-
-This is an **incomplete, provisional catalog**. Please review and correct images and metadata yourself. The GitHub Pages site is a simplified **read-only static demo**, not the full Python application. Source-code archives do not include the image collection; use the named Release ZIP for the complete catalog.
+Rights to characters, works, models, and third-party tag data remain with their respective owners. Check the applicable terms with each provider. To report a wrong name, tag, or generated result, include the entry name and catalog version in an Issue.

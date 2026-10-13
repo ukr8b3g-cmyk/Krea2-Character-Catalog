@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+outputs/python_runtime.json
+outputs/review_service.json
+outputs/*.log
+outputs/review_state.json
+outputs/user_catalog.json
+outputs/user_catalog_edits.json
+outputs/user_comparison_decisions.json
+outputs/user_items/
+_site/
+*.zip

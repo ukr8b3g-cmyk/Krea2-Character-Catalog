@@ -1,0 +1,18 @@
+{
+  "version": "0.9",
+  "unit": "catalog image candidate",
+  "character": {
+    "pass": 3809,
+    "fail": 13122,
+    "total": 16931
+  },
+  "style": {
+    "pass": 110,
+    "fail": 375,
+    "total": 485
+  },
+  "total": 17416,
+  "hold": 0,
+  "undecided": 0,
+  "scope": "current judged candidates; obsolete duplicate style versions excluded"
+}

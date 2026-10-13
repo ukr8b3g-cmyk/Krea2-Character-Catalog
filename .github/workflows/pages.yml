@@ -1,0 +1,50 @@
+name: Publish read-only catalog demo
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag containing the catalog ZIP
+        required: true
+        default: v0.9
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Download the released catalog
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+        run: |
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "Krea2-Character-Catalog-${RELEASE_TAG}.zip" --dir "$RUNNER_TEMP/catalog-download"
+          unzip -q "$RUNNER_TEMP/catalog-download/Krea2-Character-Catalog-${RELEASE_TAG}.zip" -d "$RUNNER_TEMP/catalog-release"
+          python -m pip install -r "$RUNNER_TEMP/catalog-release/Krea2-Character-Catalog/tools/requirements-editor.txt"
+      - name: Build the static read-only site
+        run: |
+          python tools/build_static_demo.py --root "$RUNNER_TEMP/catalog-release/Krea2-Character-Catalog" --dest "$RUNNER_TEMP/catalog-site" --download-url "https://github.com/${GITHUB_REPOSITORY}/releases/latest"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/catalog-site
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
