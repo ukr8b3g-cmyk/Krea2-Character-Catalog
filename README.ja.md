@@ -1,5 +1,8 @@
 [English](./README.md)
 
+![Uploading {604FEE72-032C-4BC9-8AA0-8E2AAB612015}.png…]()
+
+
 # Krea2 Character Catalog v0.9
 
 Krea2で生成したキャラクターとスタイルの見本を、検索・比較しながらプロンプトや元タグと一緒に使うためのローカルカタログです。Windows向けの画像追加・編集ツールも含みます。
