@@ -11,7 +11,7 @@ from package_release import checked_version
 
 class VersionTests(unittest.TestCase):
     def test_repository_version_is_consistent(self):
-        self.assertEqual(checked_version(ROOT), '0.9.1')
+        self.assertEqual(checked_version(ROOT), (ROOT/'VERSION').read_text().strip())
 
     def test_version_and_tag_mismatch_block_packaging(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -19,6 +19,14 @@ class VersionTests(unittest.TestCase):
             for data in [{'version':'0.91','tag':'v0.91'}, {'version':'0.9.1','tag':'v0.91'}]:
                 (root/'VERSION.json').write_text(json.dumps(data),encoding='utf-8')
                 with self.assertRaisesRegex(ValueError,'disagree'): checked_version(root)
+
+    def test_non_semantic_versions_block_packaging(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for version in ['0.91', '00.9.2', '../0.9.2', '0.9.2;bad']:
+                (root/'VERSION').write_text(version,encoding='utf-8')
+                (root/'VERSION.json').write_text(json.dumps({'version':version,'tag':'v'+version}),encoding='utf-8')
+                with self.assertRaisesRegex(ValueError,'semantic'): checked_version(root)
 
 
 if __name__ == '__main__': unittest.main()

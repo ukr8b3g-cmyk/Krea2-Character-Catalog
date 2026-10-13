@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.9.2 — 2026-10-14
+
+- Includes all comparison and Editor audit fixes: idempotent confirmed verdicts, image replacement metadata, positive prompt tracing, and persistent Remove JSON.
+- Handles ConditioningConcat and malformed optional PNG prompt metadata conservatively.
+- Atomic CSV export accepts workflow-bearing entries without damaging previous exports.
+- Hidden cards support bulk selection and restoration; original tags are searchable and facets no longer require identity tags at the beginning.
+- Static demos retain manually edited style metadata and identify their release version.
+- VERSION drives package filenames, OS tests, Release creation, and demo deployment. Existing releases are never overwritten.
+- The unchanged image collection still contains 3,809 characters and 110 styles.
+
 ## v0.9.1 — 2026-10-13
 
 - Formal semantic version; v0.9 and v0.91 published downloads are retained.

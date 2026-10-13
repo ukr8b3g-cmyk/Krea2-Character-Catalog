@@ -1,10 +1,14 @@
 {
-  "version": "0.9.1",
-  "tag": "v0.9.1",
+  "version": "0.9.2",
+  "tag": "v0.9.2",
   "characters": 3809,
   "styles": 110,
   "judgments": "provisional",
   "format": "local-python-catalog",
-  "platforms": ["Windows", "macOS", "Linux"],
+  "platforms": [
+    "Windows",
+    "macOS",
+    "Linux"
+  ],
   "desktop_validation": "Windows manual UI; macOS and Linux automated runtime checks; Finder and Linux file manager launch unverified"
 }

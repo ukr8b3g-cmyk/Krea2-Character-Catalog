@@ -59,7 +59,7 @@ def run(archive,report_path,test_venv=False,keep=False,old_python=None,browser_t
         if test_venv:
             checks.extend(check_bootstrap(root,Path(temporary.name),old_python))
         first=launch(['--port','0']);base=first['url'].rstrip('/')
-        assert first['version']=='0.9.1' and not first['reused'];checks.append('native_entrypoint')
+        assert first['version']==(root/'VERSION').read_text().strip() and not first['reused'];checks.append('native_entrypoint')
         info=get(base,'/api/info');assert Path(info['root']).resolve()==root.resolve()
         listing=get(base,'/api/list');assert len(listing['entries'])==3919
         assert len([e for e in listing['entries'] if e['kind']=='style'])==110

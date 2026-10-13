@@ -25,13 +25,14 @@ def build(root,destination,download_url='',assets=None):
         item={k:v for k,v in record.items() if k in PUBLIC_FIELDS};item.update({'demo_image':relative,'hidden':False,'deleted':False,'favorite':False,'similarity':0});entries.append(item)
     style_ids={r.get('source_style_id',r['id']) for r in entries if r['kind']=='style'}
     styles=[{k:v for k,v in r.items() if k in PUBLIC_FIELDS} for r in listing.get('style_candidates',[]) if r.get('id') in style_ids or r.get('source_style_id') in style_ids]
-    catalog={'entries':entries,'style_candidates':styles,'runs':[],'undo_count':0,'visibility_mode':'readonly-demo','hidden_export':False,'version':{'instance':'static-demo','catalog':1,'state':0}}
+    release_version=(root/'VERSION').read_text(encoding='utf-8-sig').strip() if (root/'VERSION').exists() else 'development'
+    catalog={'release_version':release_version,'entries':entries,'style_candidates':styles,'runs':[],'undo_count':0,'visibility_mode':'readonly-demo','hidden_export':False,'version':{'instance':'static-demo','catalog':1,'state':0}}
     payload=json.dumps(catalog,ensure_ascii=False,separators=(',',':')).encode('utf-8')
     # Do not expose backend tokens, absolute paths or personal review state in public JSON.
     if re.search(r'[A-Za-z]:[\\/]',payload.decode('utf-8')):raise ValueError('An absolute filesystem path remains in public metadata. Inspect before publication.')
     source_html=(root/'review/index.html').read_text(encoding='utf-8-sig').replace('<html lang="en">','<html lang="en" data-catalog-mode="demo">')
     download=('<a href="'+html.escape(download_url,quote=True)+'" target="_blank" rel="noopener">Download the full ZIP</a>') if download_url else '<span>The downloadable application is being prepared.</span>'
-    banner='<aside class="demo-banner"><p><strong>Simplified live demo — not the full application</strong></p><p>This site displays static data without the catalog Python backend. Features and saving differ from the local ZIP application. Public data cannot be deleted, registered, or edited.</p><small>Characters and styles are provisional. Generated results may be inaccurate; please review and correct your downloaded copy.</small>'+download+'</aside>'
+    banner='<aside class="demo-banner"><p><strong>Simplified live demo — v'+html.escape(release_version)+' — not the full application</strong></p><p>This site displays static data without the catalog Python backend. Features and saving differ from the local ZIP application. Public data cannot be deleted, registered, or edited.</p><small>Characters and styles are provisional. Generated results may be inaccurate; please review and correct your downloaded copy.</small>'+download+'</aside>'
     source_html=source_html.replace('</header>','</header>'+banner,1)
     destination.mkdir();(destination/'images').mkdir()
     for relative,source in image_sources.items():

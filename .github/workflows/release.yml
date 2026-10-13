@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: Publish v0.9.1 after all OS tests pass
+        description: Publish VERSION after all OS tests pass
         type: boolean
         default: false
         required: true
@@ -32,11 +32,16 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - name: Read package version
+        id: version
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
       - name: Build verified complete ZIP
         run: python tools/package_release.py --dest dist --cache "$RUNNER_TEMP/catalog-base"
       - uses: actions/upload-artifact@v4
@@ -52,6 +57,8 @@ jobs:
       matrix:
         os: [windows-2022, macos-15-intel, ubuntu-24.04]
     runs-on: ${{ matrix.os }}
+    env:
+      CATALOG_VERSION: ${{ needs.build.outputs.version }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -72,9 +79,9 @@ jobs:
       - name: Verify native locks and folder routing
         run: python -B -m unittest discover -s tests -v
       - name: Test the complete ZIP on this OS
-        run: python -B tests/check_archive_runtime.py --archive dist/Krea2-Character-Catalog-v0.9.1.zip --report reports/${{ matrix.os }}.json --test-venv --old-python "${{ steps.old-python.outputs.python-path }}" --browser-test
+        run: python -B tests/check_archive_runtime.py --archive dist/Krea2-Character-Catalog-v${{ needs.build.outputs.version }}.zip --report reports/${{ matrix.os }}.json --test-venv --old-python "${{ steps.old-python.outputs.python-path }}" --browser-test
       - name: Test comparison and metadata contracts from the distributed ZIP
-        run: python -B tests/check_audit_contracts.py --archive dist/Krea2-Character-Catalog-v0.9.1.zip --report reports/audit-${{ matrix.os }}.json --browser-test
+        run: python -B tests/check_audit_contracts.py --archive dist/Krea2-Character-Catalog-v${{ needs.build.outputs.version }}.zip --report reports/audit-${{ matrix.os }}.json --browser-test
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -85,6 +92,8 @@ jobs:
 
   publish:
     needs: [build, test]
+    env:
+      CATALOG_VERSION: ${{ needs.build.outputs.version }}
     if: github.event_name == 'workflow_dispatch' && inputs.publish
     runs-on: ubuntu-24.04
     permissions:
@@ -99,17 +108,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view v0.9.1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo 'v0.9.1 already exists. Refusing to replace an existing release.' >&2
+          if gh release view "v$CATALOG_VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "v$CATALOG_VERSION already exists. Refusing to replace an existing release." >&2
             exit 1
           fi
           (cd dist && sha256sum -c SHA256SUMS.txt)
-          cp docs/RELEASE_v0.9.1.md release-notes.md
+          cp "docs/RELEASE_v$CATALOG_VERSION.md" release-notes.md
           printf '\n### Release validation\n\n[Exact tested ZIP: all three OS jobs and reports](https://github.com/%s/actions/runs/%s).\n' "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> release-notes.md
-          gh release create v0.9.1 dist/Krea2-Character-Catalog-v0.9.1.zip dist/Krea2-Character-Catalog-Rejected-Workflows-v0.9.1.zip dist/SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title 'Krea2 Character Catalog v0.9.1 — Windows, macOS, Linux' --notes-file release-notes.md --latest
+          gh release create "v$CATALOG_VERSION" "dist/Krea2-Character-Catalog-v$CATALOG_VERSION.zip" "dist/Krea2-Character-Catalog-Rejected-Workflows-v$CATALOG_VERSION.zip" dist/SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Krea2 Character Catalog v$CATALOG_VERSION — Windows, macOS, Linux" --notes-file release-notes.md --latest
 
   deploy-demo:
-    needs: publish
+    needs: [build, publish]
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -130,8 +139,8 @@ jobs:
       - name: Build the read-only demo from the tested ZIP
         run: |
           python -m pip install -r tools/requirements-editor.txt
-          python -c "import sys; from pathlib import Path; sys.path.insert(0,'tools'); from package_release import safe_extract; safe_extract('dist/Krea2-Character-Catalog-v0.9.1.zip',Path('demo-release'))"
-          python tools/build_static_demo.py --root demo-release/Krea2-Character-Catalog --dest "$RUNNER_TEMP/catalog-site" --download-url "https://github.com/${GITHUB_REPOSITORY}/releases/latest"
+          python -c "import sys; from pathlib import Path; sys.path.insert(0,'tools'); from package_release import safe_extract; safe_extract('dist/Krea2-Character-Catalog-v${{ needs.build.outputs.version }}.zip',Path('demo-release'))"
+          python tools/build_static_demo.py --root demo-release/Krea2-Character-Catalog --dest "$RUNNER_TEMP/catalog-site" --download-url "https://github.com/${GITHUB_REPOSITORY}/releases/tag/v${{ needs.build.outputs.version }}"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

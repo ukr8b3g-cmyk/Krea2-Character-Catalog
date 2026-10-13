@@ -4,6 +4,7 @@ import argparse
 import csv
 import hashlib
 import io
+import re
 import json
 import shutil
 import stat
@@ -65,6 +66,8 @@ def include_source(path):
 def checked_version(source):
     version = (source/'VERSION').read_text(encoding='utf-8-sig').strip()
     metadata = json.loads((source/'VERSION.json').read_text(encoding='utf-8-sig'))
+    if not re.fullmatch(r'(?:0|[1-9][0-9]*)(?:\.(?:0|[1-9][0-9]*)){2}', version):
+        raise ValueError('VERSION must be a semantic version such as 0.9.2.')
     if metadata.get('version') != version or metadata.get('tag') != 'v'+version:
         raise ValueError('VERSION and VERSION.json disagree; do not package this source.')
     return version
@@ -78,8 +81,6 @@ def build(source, destination, base, rejected):
     if digest(base) != BASE_SHA or digest(rejected) != REJECTED_SHA:
         raise ValueError('The saved v0.9 data has changed.')
     version = checked_version(source)
-    if version != '0.9.1':
-        raise ValueError('This build recipe requires version 0.9.1.')
     entries = {}
     with zipfile.ZipFile(base) as previous:
         if previous.testzip() is not None:
@@ -112,7 +113,7 @@ def build(source, destination, base, rejected):
     archive = destination / ('Krea2-Character-Catalog-v'+version+'.zip')
     with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as output:
         for name,data in sorted(entries.items()):
-            entry = zipfile.ZipInfo(PREFIX+name,date_time=(2026,10,13,0,0,0))
+            entry = zipfile.ZipInfo(PREFIX+name,date_time=(2026,10,14,0,0,0))
             entry.create_system = 3
             entry.external_attr = (stat.S_IFREG | (0o755 if name.endswith(('.command','.sh')) else 0o644)) << 16
             entry.compress_type = zipfile.ZIP_DEFLATED
