@@ -7,6 +7,7 @@ import json
 import os
 import re
 import secrets
+import socketserver
 import threading
 import time
 from catalog_editor import EditorCatalog, decode_bytes, inspect_image
@@ -19,6 +20,14 @@ from runtime_support import CatalogLock, atomic_json, catalog_version, folder_av
 RUN = re.compile(r"(?:run|test)-[0-9]{8}-[0-9]{6}")
 ID = re.compile(r"(?:a|cn|ky|jp)[0-9]{5}")
 ASSETS = Path(__file__).resolve().parent
+
+
+class LocalCatalogServer(ThreadingHTTPServer):
+    def server_bind(self):
+        # A loopback-only catalog needs no reverse DNS; macOS resolvers can stall it.
+        socketserver.TCPServer.server_bind(self)
+        self.server_name = 'localhost'
+        self.server_port = self.server_address[1]
 
 
 def etag_matches(header, etag):
@@ -694,7 +703,7 @@ def make_server(root, port=8767):
                 self.json({"error": str(error)}, 400)
 
     print('Binding local HTTP socket...',flush=True)
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    server = LocalCatalogServer(("127.0.0.1", port), Handler)
     server.store = store
     server.token = token
     return server

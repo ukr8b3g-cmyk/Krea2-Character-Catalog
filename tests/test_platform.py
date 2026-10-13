@@ -12,6 +12,14 @@ import runtime_support as platform
 
 
 class PlatformTests(unittest.TestCase):
+    def test_loopback_bind_never_uses_reverse_dns(self):
+        from http.server import BaseHTTPRequestHandler
+        from server import LocalCatalogServer
+        with patch('socket.getfqdn',side_effect=AssertionError('Reverse DNS must not be used')):
+            with LocalCatalogServer(('127.0.0.1',0),BaseHTTPRequestHandler) as server:
+                self.assertGreater(server.server_port,0)
+                self.assertEqual(server.server_name,'localhost')
+
     def test_desktop_folder_commands(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory)/'image with spaces.png';path.touch()
