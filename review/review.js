@@ -70,8 +70,10 @@
   let facetObserver=null, facetContext='', appliedSearch='', mainSearch=null, showHidden=false,hiddenOnly=false;
   const cardCache=new Map();
   // Keep only the current dataset, query, and up to seven lazy facet counts.
-  Object.assign(messages.ja,{title:'Krea2 キャラクターカタログ v0.9.1',sortCopyright:'Copyright件数順'});
-  Object.assign(messages.en,{title:'Krea2 Character Catalog v0.9.1',sortCopyright:'Copyright (most first)'});
+  const packageVersion=document.documentElement.dataset.catalogVersion||'';
+  const versionSuffix=/^[0-9]+\.[0-9]+\.[0-9]+$/.test(packageVersion)?' v'+packageVersion:'';
+  Object.assign(messages.ja,{title:'Krea2 キャラクターカタログ'+versionSuffix,sortCopyright:'Copyright件数順'});
+  Object.assign(messages.en,{title:'Krea2 Character Catalog'+versionSuffix,sortCopyright:'Copyright (most first)'});
   if(demoMode){Object.assign(messages.ja,{counts:'表示 {shown}枚 / 該当 {matched}枚',styleCounts:'表示 {shown}枚 / 該当 {matched}枚',characterCounts:'表示 {shown}枚 / 該当 {matched}枚',title:'Krea2 キャラクターカタログ — ライブデモ',intro:'簡易ライブデモです。フル機能版ではありません。Pythonバックエンドを使わず静的データを表示します。追加・編集・保存にはZIP版を使ってください。',styleIntro:'スタイルも暫定版です。ダウンロード後は利用者自身でも確認・修正してください。',demoReadOnly:'閲覧用デモです。公開データは変更できません。'});Object.assign(messages.en,{counts:'Showing {shown} / {matched} matches',styleCounts:'Showing {shown} / {matched} matches',characterCounts:'Showing {shown} / {matched} matches',title:'Krea2 Character Catalog — Live Demo',intro:'Simplified live demo, not the full application. Static data is displayed without the catalog Python backend. Download the ZIP for local editing and saving.',styleIntro:'Styles are provisional. Please check and correct them after downloading.',demoReadOnly:'Read-only demo. Public data cannot be changed.'});}
   let restoredRoute=null, restoredScrollY=0, restoreViewport=true, scrollSaveTimer=null;
   const catalogCollator=new Intl.Collator('en',{numeric:true});

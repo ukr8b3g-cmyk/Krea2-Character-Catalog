@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.9.3 — 2026-10-14
+
+- Catalog headings follow the packaged VERSION in both languages; the live demo retains its static-mode notice.
+- Native ZIP browser tests now verify the visible heading matches VERSION before and after a language change.
+- Includes all v0.9.2 fixes; v0.9.2 and earlier downloads are preserved.
+
 ## v0.9.2 — 2026-10-14
 
 - Includes all comparison and Editor audit fixes: idempotent confirmed verdicts, image replacement metadata, positive prompt tracing, and persistent Remove JSON.

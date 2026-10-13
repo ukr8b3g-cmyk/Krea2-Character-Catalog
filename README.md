@@ -1,8 +1,8 @@
 [日本語 / Japanese](README.ja.md)
 
-**v0.9.2 — Windows, macOS, and Linux startup files in one catalog ZIP.** Requires Python 3.10+ and a web browser. English is the default interface language.
+**v0.9.3 — Windows, macOS, and Linux startup files in one catalog ZIP.** Requires Python 3.10+ and a web browser. English is the default interface language.
 
-**v0.9.2 fixes:** The complete ZIP includes [comparison, Editor, prompt extraction, CSV export, hidden restoration, tag search, and demo consistency fixes](docs/AUDIT_FIXES.md). Previous releases remain available. The live demo is rebuilt from the same tested ZIP.
+**v0.9.3 fixes:** The complete ZIP includes [comparison, Editor, prompt extraction, CSV export, hidden restoration, tag search, and demo consistency fixes](docs/AUDIT_FIXES.md). Previous releases remain available. The live demo is rebuilt from the same tested ZIP.
 
 | Your OS | Open this file in the extracted `Krea2-Character-Catalog` folder |
 |---|---|
@@ -12,12 +12,12 @@
 
 For direct image registration, use the matching `open_editor.cmd`, `open_editor.command`, or `open_editor.sh`. All three platforms open the same local browser interface. See [platform setup and test coverage](docs/PLATFORMS.md).
 
-The published v0.9.2 ZIP is gated on Windows Server 2022, macOS 15 Intel, and Ubuntu 24.04 CI tests. See the [exact release validation run and downloadable OS reports](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.2#release-validation) and [coverage details](docs/PLATFORMS.md#validation-scope). macOS/Linux desktop double-clicking, security/permission dialogs, default-browser opening, and native file-manager integration remain **unverified on physical desktops**. AnimaDex is an optional, separate workflow.
+The published v0.9.3 ZIP is gated on Windows Server 2022, macOS 15 Intel, and Ubuntu 24.04 CI tests. See the [exact release validation run and downloadable OS reports](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.3#release-validation) and [coverage details](docs/PLATFORMS.md#validation-scope). macOS/Linux desktop double-clicking, security/permission dialogs, default-browser opening, and native file-manager integration remain **unverified on physical desktops**. AnimaDex is an optional, separate workflow.
 
 <img width="1269" height="743" alt="{604FEE72-032C-4BC9-8AA0-8E2AAB612015}" src="https://github.com/user-attachments/assets/e1904ff8-181d-4792-bb61-95b17fddf90a" />
 
 
-# Krea2 Character Catalog v0.9.2
+# Krea2 Character Catalog v0.9.3
 
 A local catalog of Krea2-generated character and style samples, with searchable tags, reusable prompts, and an image registration and editing tool for Windows, macOS, and Linux. **English is the default interface language.** Japanese is also available; your language choice is remembered.
 
@@ -25,11 +25,11 @@ A local catalog of Krea2-generated character and style samples, with searchable 
 
 ## Downloads and live demo
 
-- **[Download v0.9.2: complete catalog ZIP and rejected-workflow ZIP](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.2)**
+- **[Download v0.9.3: complete catalog ZIP and rejected-workflow ZIP](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.3)**
 - **[Latest release](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest)**
 - **[Read-only live demo](https://ukr8b3g-cmyk.github.io/Krea2-Character-Catalog/)**
 
-Download `Krea2-Character-Catalog-v0.9.2.zip` for the complete application. It includes the accepted images, original tag CSVs, workflow examples, and Catalog Editor. Extract it to obtain a folder named `Krea2-Character-Catalog`. Python and generation models are not bundled.
+Download `Krea2-Character-Catalog-v0.9.3.zip` for the complete application. It includes the accepted images, original tag CSVs, workflow examples, and Catalog Editor. Extract it to obtain a folder named `Krea2-Character-Catalog`. Python and generation models are not bundled.
 
 GitHub's **Code → Download ZIP** and automatic **Source code** archives contain the development source, without the image collection or full tag dataset. Use the named ZIP attached to a Release for the complete catalog. Each release keeps its own versioned downloads. `SHA256SUMS.txt` provides checksums for the two ZIPs.
 
@@ -124,7 +124,7 @@ The detail panel offers **Open original image** and **Open image folder**. Where
 
 The distribution copy removes the original PC's CSV paths from image metadata. Character workflows use the saved, resolved generation text through `manual_prompt`. Install or update the bundled `ComfyUI-Krea2-Catalog-Tools` under your ComfyUI `custom_nodes` folder and restart ComfyUI. Adjust model names and missing nodes for your environment. The compressed pixel data has not been changed. Some older images have no generation metadata, so not every image can reproduce its complete original settings.
 
-Rejected images and blank rejected cards are excluded from the catalog ZIP. Their regeneration JSONs are available separately as **`Krea2-Character-Catalog-Rejected-Workflows-v0.9.2.zip`**. Of these, 13,486 are based on saved generation metadata, and 11 older entries are editable templates without original metadata. Running a rejected recipe does not guarantee an accepted result. You can use the recipes without adding rejected images back to the catalog.
+Rejected images and blank rejected cards are excluded from the catalog ZIP. Their regeneration JSONs are available separately as **`Krea2-Character-Catalog-Rejected-Workflows-v0.9.3.zip`**. Of these, 13,486 are based on saved generation metadata, and 11 older entries are editable templates without original metadata. Running a rejected recipe does not guarantee an accepted result. You can use the recipes without adding rejected images back to the catalog.
 
 ## Simplified live demo
 

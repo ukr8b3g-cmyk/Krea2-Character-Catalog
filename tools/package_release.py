@@ -97,6 +97,9 @@ def build(source, destination, base, rejected):
         relative = path.relative_to(source)
         if path.is_file() and include_source(relative):
             entries[relative.as_posix()] = path.read_bytes()
+    if entries['review/index.html'].count(b'<html lang="en">') != 1:
+        raise ValueError('The catalog HTML version stamp cannot be applied.')
+    entries['review/index.html'] = entries['review/index.html'].replace(b'<html lang="en">', ('<html lang="en" data-catalog-version="'+version+'">').encode('ascii'), 1)
     forbidden = ('__pycache__','.venv','review_service.json','python_runtime.json','review_state.json','user_catalog.json','user_catalog_edits.json')
     for name in entries:
         if any(part in forbidden or part.startswith(('.venv','.catalog-venv')) for part in PurePosixPath(name).parts) or name.endswith(('.log','.lock','.pyc')):

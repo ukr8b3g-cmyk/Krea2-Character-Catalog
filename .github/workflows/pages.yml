@@ -8,7 +8,7 @@ on:
       release_tag:
         description: Release tag containing the catalog ZIP
         required: true
-        default: v0.9.1
+        default: latest
 
 permissions:
   contents: read
@@ -35,6 +35,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
         run: |
+          if [ "$RELEASE_TAG" = latest ]; then RELEASE_TAG=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName); fi
           gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "Krea2-Character-Catalog-${RELEASE_TAG}.zip" --dir "$RUNNER_TEMP/catalog-download"
           unzip -q "$RUNNER_TEMP/catalog-download/Krea2-Character-Catalog-${RELEASE_TAG}.zip" -d "$RUNNER_TEMP/catalog-release"
           python -m pip install -r "$RUNNER_TEMP/catalog-release/Krea2-Character-Catalog/tools/requirements-editor.txt"
