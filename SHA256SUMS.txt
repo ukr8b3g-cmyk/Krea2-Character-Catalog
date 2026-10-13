@@ -1,2 +1,2 @@
-02a3c7426f8ffcce6d82b276dccc33030f65b30cd8ace059b30a89467469c075  Krea2-Character-Catalog-v0.9.2.zip
-a263144c012fe38de2181b0daf1283d8b93cff8a0aaf978d6b04aa93fabd27ce  Krea2-Character-Catalog-Rejected-Workflows-v0.9.2.zip
+ec183335e3a84dacb68994955195f1dad1a0a341333ebfe520eed5898b19f0d3  Krea2-Character-Catalog-v0.9.3.zip
+a263144c012fe38de2181b0daf1283d8b93cff8a0aaf978d6b04aa93fabd27ce  Krea2-Character-Catalog-Rejected-Workflows-v0.9.3.zip
