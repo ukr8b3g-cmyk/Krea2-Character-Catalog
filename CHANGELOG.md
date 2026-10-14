@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.4 — 2026-10-14
+
+- Restores the top-right **Stop server** / **サーバー停止** control using the existing authenticated shutdown API. Hover text explains that it stops this catalog background process while leaving the browser tab open.
+- Stops automatic refresh after shutdown, preserves saved images and catalog state, and provides restart guidance.
+- The simplified static demo has no stop-server control.
+- Native ZIP browser tests cover both labels and hover text, actual server shutdown, the surviving tab, unchanged stored state, and reopening via the native launcher.
+- All images, review decisions, and prior release downloads are preserved.
+
 ## v0.9.3 — 2026-10-14
 
 - Catalog headings follow the packaged VERSION in both languages; the live demo retains its static-mode notice.

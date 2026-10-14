@@ -292,6 +292,7 @@ def check_browser(base,api,catalog,workspace,checks):
             worker=threading.Thread(target=static.serve_forever,daemon=True);worker.start()
             try:
                 demo=browser.new_page();demo.goto('http://127.0.0.1:'+str(static.server_port))
+                expect(demo.locator('#stop-server')).to_be_hidden()
                 demo.locator('#tab-styles').click();demo.locator('#search').fill('CORRECTED_STYLE_TAG')
                 expect(demo.locator('#grid .card')).to_have_count(1)
                 expect(demo.locator('#grid .card')).to_contain_text('Corrected style')

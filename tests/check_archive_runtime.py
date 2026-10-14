@@ -102,6 +102,12 @@ def run(archive,report_path,test_venv=False,keep=False,old_python=None,browser_t
         if browser_test:
             assert any(e['name']=='CI Browser saved' for e in listing['entries'])
             checks.append('browser_saved_entry_survives_backend_restart')
+            check_stop_browser(base,root)
+            checks.append('chromium_stop_server_labels_tooltips_shutdown_tab_and_saved_data')
+            reopened=launch(['--port','0']);base=reopened['url'].rstrip('/')
+            edited=next(e for e in get(base,'/api/list')['entries'] if e['key']==key)
+            assert edited['name']=='Edited 日本語' and edited['hidden'] and edited['favorite']
+            checks.append('native_reopen_after_stop_button_preserves_state')
         stop()
         if test_venv:
             result=invoke(root,['--resolve-only','--force-venv'],env,timeout=240)
@@ -162,6 +168,34 @@ def check_write_failure(root,base,token,key,digest):
             for handle in handles:kernel.CloseHandle(handle)
         else:target.parent.chmod(mode)
     assert not list(target.parent.glob('*.tmp'))
+
+
+def check_stop_browser(base,root):
+    from playwright.sync_api import sync_playwright,expect
+    protected=[root/'outputs'/name for name in ['review_state.json','user_catalog.json','user_catalog_edits.json']]
+    protected += [p for p in (root/'outputs/user_items').rglob('*') if p.is_file()]
+    before={p:hashlib.sha256(p.read_bytes()).hexdigest() for p in protected if p.exists()}
+    with sync_playwright() as p:
+        browser=p.chromium.launch()
+        try:
+            page=browser.new_page();page.goto(base)
+            page.locator('#language').select_option('en')
+            stop_button=page.get_by_role('button',name='Stop server',exact=True)
+            expect(stop_button).to_be_enabled(timeout=30000)
+            expect(stop_button).to_have_attribute('title',"Stop this catalog's background process. The browser tab stays open.")
+            page.locator('#language').select_option('ja')
+            stop_button=page.get_by_role('button',name='サーバー停止',exact=True)
+            expect(stop_button).to_have_attribute('title','このカタログのバックグラウンド処理を停止します。ブラウザーの画面は閉じません。')
+            stop_button.click()
+            expect(page.get_by_role('button',name='サーバー停止済み',exact=True)).to_be_disabled()
+            expect(page.locator('#connection')).to_contain_text('サーバーを停止しました')
+            assert not page.is_closed() and page.url.rstrip('/')==base
+            deadline=time.monotonic()+10
+            while (root/'outputs/review_service.json').exists() and time.monotonic()<deadline:time.sleep(.1)
+            assert not (root/'outputs/review_service.json').exists()
+            with socket.socket() as sock:assert sock.connect_ex(('127.0.0.1',urllib.parse.urlsplit(base).port))!=0
+            assert all(path.exists() and hashlib.sha256(path.read_bytes()).hexdigest()==digest for path,digest in before.items())
+        finally:browser.close()
 
 
 def check_browser(base,root,directory):

@@ -8,7 +8,7 @@ Filters, language, display settings, and page position are stored in your browse
 
 Click an image to enlarge it and copy the reusable prompt or original tags. **Hide does not delete files.** Undo restores the previous hide operation. Hidden list and Show again also restore visibility. Physically removed rejected images are not part of the distribution.
 
-Select several cards to hide them together. Save visible catalog (CSV) exports non-hidden entries in the current tab; Save hidden list (TXT) exports hidden entries. The old Exit review control is not included.
+Select several cards to hide them together. Save visible catalog (CSV) exports non-hidden entries in the current tab; Save hidden list (TXT) exports hidden entries. Use **Stop server** in the top-right corner to stop only this catalog's background process. Hover over it for the explanation. It keeps the browser tab open and does not delete images or saved catalog data. To restart, open the startup file for your OS again. The static live demo has no server-stop control.
 
 ## Register images
 

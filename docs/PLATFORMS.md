@@ -1,4 +1,4 @@
-# v0.9.3 platform setup and verification
+# v0.9.4 platform setup and verification
 
 The complete ZIP includes Windows, macOS, and Linux launchers. Python **3.10 or later** and a web browser are required. Python itself and generation models are not bundled. The catalog does not install or upgrade your existing Python environment.
 
@@ -47,7 +47,7 @@ Useful startup arguments are `--editor`, `--no-open`, `--port 8790`, `--force-ve
 
 ## Validation scope
 
-For a published v0.9.3 ZIP, see the [exact GitHub Actions run and downloadable per-OS reports linked in Release validation](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.3#release-validation). Publication requires the following tests to pass on **Windows Server 2022, macOS 15 Intel, and Ubuntu 24.04**, using Python 3.12 and a real Python 3.9 negative-test interpreter. The same built ZIP is extracted and invoked through `.cmd`, `.command`, or `.sh` respectively; the server is not the only launch entry under test.
+For a published v0.9.4 ZIP, see the [exact GitHub Actions run and downloadable per-OS reports linked in Release validation](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.4#release-validation). Publication requires the following tests to pass on **Windows Server 2022, macOS 15 Intel, and Ubuntu 24.04**, using Python 3.12 and a real Python 3.9 negative-test interpreter. The same built ZIP is extracted and invoked through `.cmd`, `.command`, or `.sh` respectively; the server is not the only launch entry under test.
 
 | Check | Method / scope |
 |---|---|
@@ -65,12 +65,12 @@ For a published v0.9.3 ZIP, see the [exact GitHub Actions run and downloadable p
 
 ## AnimaDex is separate
 
-The v0.9.3 release includes [audit regression tests](AUDIT_FIXES.md) using a temporary SQLite DB, fictitious image pairs, the real catalog HTTP API, and headless Editor operations. These run against the candidate ZIP on each CI OS. This limited contract coverage does not certify a real AnimaDex installation, the comparison page's desktop behavior, or relocation of prepared absolute paths between OSes. The release includes these checks in addition to the core startup and Editor tests.
+The v0.9.4 release includes [audit regression tests](AUDIT_FIXES.md) using a temporary SQLite DB, fictitious image pairs, the real catalog HTTP API, and headless Editor operations. These run against the candidate ZIP on each CI OS. This limited contract coverage does not certify a real AnimaDex installation, the comparison page's desktop behavior, or relocation of prepared absolute paths between OSes. The release includes these checks in addition to the core startup and Editor tests.
 
 **AnimaDex integration is optional and unverified on Linux/macOS.** It is excluded from the core catalog three-OS support claims and release tests. SQLite DB reading, image-reference matching, comparison pages, applying confirmed verdicts, case/separator differences, absolute paths, and comparison migration/rebuilding across OSes have not been exercised in this CI. Use local configuration and regenerate comparisons after changing environments. No real user DB or personal reference images are included in CI.
 
 ## 日本語
 
-v0.9.3の1つのZIPに3OSの起動ファイルを同梱します。Python 3.10以上は別途必要です。未導入・旧版・無効な指定・venv不足・書込権限・Pillow/WebP不足・通信失敗を区別して案内します。導入後は同じ起動ファイルを再度開いてください。旧Python・既存venvを変更せず、依存は新規専用環境にのみ導入します。
+v0.9.4の1つのZIPに3OSの起動ファイルを同梱します。Python 3.10以上は別途必要です。未導入・旧版・無効な指定・venv不足・書込権限・Pillow/WebP不足・通信失敗を区別して案内します。導入後は同じ起動ファイルを再度開いてください。旧Python・既存venvを変更せず、依存は新規専用環境にのみ導入します。
 
 上の表は公開ZIPに対する自動試験の範囲です。Mac/Linuxの通常のデスクトップ操作とOSの警告画面・標準ブラウザー・ファイルマネージャー連携は実機未確認です。AnimaDex連携は別の任意機能で、Linux/macOSでは未検証です。
