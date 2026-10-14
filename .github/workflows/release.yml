@@ -41,7 +41,16 @@ jobs:
           python-version: '3.12'
       - name: Read package version
         id: version
-        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from package_release import checked_version
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f"version={checked_version(Path.cwd())}\n")
+          PY
       - name: Build verified complete ZIP
         run: python tools/package_release.py --dest dist --cache "$RUNNER_TEMP/catalog-base"
       - uses: actions/upload-artifact@v4

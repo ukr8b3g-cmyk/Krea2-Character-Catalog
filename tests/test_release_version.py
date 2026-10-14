@@ -13,6 +13,14 @@ class VersionTests(unittest.TestCase):
     def test_repository_version_is_consistent(self):
         self.assertEqual(checked_version(ROOT), (ROOT/'VERSION').read_text().strip())
 
+    def test_windows_and_unix_line_endings_produce_clean_version(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root/'VERSION.json').write_text(json.dumps({'version':'0.9.4','tag':'v0.9.4'}),encoding='utf-8')
+            for ending in [b'\n', b'\r\n']:
+                (root/'VERSION').write_bytes(b'0.9.4'+ending)
+                self.assertEqual(checked_version(root), '0.9.4')
+
     def test_version_and_tag_mismatch_block_packaging(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory); (root/'VERSION').write_text('0.9.1\n',encoding='utf-8')
