@@ -51,7 +51,11 @@ def run(archive,report):
                     with sync_playwright() as p:
                         browser=p.chromium.launch()
                         try:
-                            page=browser.new_page();page.goto(setup_url);page.locator('#language').select_option('ja')
+                            page=browser.new_page();page.goto(setup_url)
+                            expect(page.locator('#language')).to_have_value('en');expect(page.locator('h1')).to_contain_text('Setup')
+                            page.wait_for_function("document.querySelector('#catalog_root').value.length>0")
+                            initial=page.locator('#catalog_root').input_value();page.locator('#close-screen').click();expect(page.locator('.closed-screen')).to_be_visible();page.get_by_role('button',name='Return to setup',exact=True).click();expect(page.locator('#catalog_root')).to_have_value(initial)
+                            page.locator('#language').select_option('ja');expect(page.locator('h1')).to_contain_text('初期設定');checks.append('english_default_setup_language_and_close_keeps_inputs')
                             page.wait_for_function("document.querySelector('#catalog_root').value.length>0")
                             def choose(field,target):
                                 page.locator('[data-pick="'+field+'"]').click();page.wait_for_function("document.querySelector('#picker-path').textContent.length>0")
@@ -67,7 +71,15 @@ def run(archive,report):
                             page.locator('#check').click();expect(page.locator('#save')).to_be_enabled(timeout=30000);expect(page.locator('#result')).to_contain_text('比較可能：1件');checks.append('connection_and_pair_count')
                             page.locator('#save').click();expect(page.locator('#grid .card')).to_have_count(1,timeout=30000)
                             page.wait_for_function("[...document.querySelectorAll('#grid img')].length===2 && [...document.querySelectorAll('#grid img')].every(i=>i.complete&&i.naturalWidth>0)")
-                            comparison_url=page.url;checks.append('save_opens_comparison_with_two_decoded_images')
+                            comparison_url=page.url
+                            expect(page.locator('#language')).to_have_value('en');expect(page.locator('.decision .match')).to_have_text('Accept')
+                            page.locator('.decision .match').click();page.locator('#language').select_option('ja');expect(page.locator('.decision .match')).to_have_text('一致（合格）');page.reload();expect(page.locator('#language')).to_have_value('ja');expect(page.locator('.decision .match')).to_have_attribute('aria-pressed','true')
+                            page.locator('#close-screen').click();expect(page.locator('.closed-screen')).to_be_visible();page.get_by_role('button',name='比較画面に戻る',exact=True).click();expect(page.locator('.decision .match')).to_have_attribute('aria-pressed','true')
+                            page.locator('#language').select_option('en');expect(page.locator('#export')).to_be_enabled();expect(page.locator('#status')).to_contain_text('Selected decisions: 1');checks.append('comparison_language_reload_close_and_choices_preserved')
+                            for screen in (setup_url,comparison_url):
+                                page.set_viewport_size({'width':390,'height':844});page.goto(screen);page.wait_for_function("document.readyState==='complete'");assert not page.evaluate('document.documentElement.scrollWidth > innerWidth + 2'), 'Mobile horizontal overflow'
+                            checks.append('setup_and_comparison_mobile_layout');page.goto(comparison_url)
+                            checks.append('save_opens_comparison_with_two_decoded_images')
                             page.locator('#comparison-settings').click();expect(page.locator('#animadex_root')).to_have_value(ready['animadex']);checks.append('settings_link_and_persistence')
                             reopened=launch();assert reopened['url']==comparison_url;checks.append('native_reopen_reuses_saved_comparison')
                         finally:browser.close()

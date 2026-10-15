@@ -8,6 +8,8 @@ const progress=value=>{fs.writeFileSync(path.join(workspace,'browser-progress.js
  const browser=await chromium.launch({headless:true,executablePath:chromiumPath});
  try{
   const page=await browser.newPage();await page.goto(ready.url);await page.locator('#catalog_root').waitFor();
+  if(await page.locator('#language').inputValue()!=='en')throw Error('Setup must default to English');
+  await page.locator('#close-screen').click();await page.getByRole('button',{name:'Return to setup',exact:true}).click();
   await page.locator('#language').selectOption('ja');
   await page.waitForFunction(()=>document.querySelector('#catalog_root').value.length>0);
   async function choose(field,target){
@@ -30,6 +32,11 @@ const progress=value=>{fs.writeFileSync(path.join(workspace,'browser-progress.js
   await page.locator('#grid .card').waitFor();
   const images=await page.locator('#grid .card img').evaluateAll(imgs=>imgs.map(i=>({loaded:i.complete&&i.naturalWidth>0,src:i.src})));
   if(images.length!==2||images.some(i=>!i.loaded))throw Error('Both comparison images must load');
+  if(await page.locator('#language').inputValue()!=='en')throw Error('Comparison must default to English');
+  await page.locator('.decision .match').click();await page.locator('#language').selectOption('ja');await page.reload();await page.locator('#grid .card').waitFor();
+  if(await page.locator('#language').inputValue()!=='ja'||await page.locator('.match').getAttribute('aria-pressed')!=='true')throw Error('Language/decision not preserved');
+  await page.locator('#close-screen').click();await page.getByRole('button',{name:'比較画面に戻る',exact:true}).click();await page.locator('#language').selectOption('en');
+  if(!(await page.locator('#status').innerText()).includes('Selected decisions: 1'))throw Error('English selection summary missing');
   await page.screenshot({path:path.join(workspace,'comparison.png'),fullPage:true});
   await page.locator('#comparison-settings').click();await page.waitForURL(ready.url);await page.waitForFunction(()=>document.querySelector('#animadex_root').value.length>0);
   if(await page.locator('#animadex_root').inputValue()!==ready.animadex)throw Error('Settings not persisted');
