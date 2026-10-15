@@ -41,7 +41,7 @@ def run(archive,report):
                         if fixture.poll() is not None:raise AssertionError((work/'fixture.log').read_text())
                         if time.monotonic()>deadline:raise AssertionError('Fixture startup timeout')
                         time.sleep(.1)
-                    ready=json.loads((workspace/'ready.json').read_text())
+                    ready=json.loads((workspace/'ready.json').read_text(encoding='utf-8'))
                     name='START_COMPARISON - Windows.cmd' if os.name=='nt' else 'START_COMPARISON - macOS.command' if sys.platform=='darwin' else 'START_COMPARISON - Linux.sh'
                     command=[str(home/'AnimaDex-Comparison'/name)] if os.name=='nt' else ['sh',str(home/'AnimaDex-Comparison'/name)]
                     command+=['--no-open','--json']
@@ -73,15 +73,18 @@ def run(archive,report):
                         finally:browser.close()
                     result['passed']=True
                 finally:
-                    settings_path=home/'AnimaDex-Comparison/app/setup-settings.json'
-                    if settings_path.exists():
-                        settings=json.loads(settings_path.read_text());info=json.loads((Path(settings['prepared_path'])/'app/review-server.json').read_text());stop(info['url'],'X-Comparison-Token',info['token'])
-                    if setup_url:
-                        bootstrap=get(setup_url+'api/bootstrap');stop(setup_url,'X-Setup-Token',bootstrap['token'])
-                    if workspace.exists():(workspace/'stop').touch()
-                    if fixture:
-                        try:fixture.wait(timeout=30)
-                        except subprocess.TimeoutExpired:fixture.terminate();fixture.wait(timeout=10)
+                    try:
+                        if 'comparison_url' in locals():
+                            bootstrap=get(comparison_url+'api/bootstrap');stop(comparison_url,'X-Comparison-Token',bootstrap['token'])
+                    finally:
+                        try:
+                            if setup_url:
+                                bootstrap=get(setup_url+'api/bootstrap');stop(setup_url,'X-Setup-Token',bootstrap['token'])
+                        finally:
+                            if workspace.exists():(workspace/'stop').touch()
+                            if fixture:
+                                try:fixture.wait(timeout=30)
+                                except subprocess.TimeoutExpired:fixture.terminate();fixture.wait(timeout=10)
                     # Native setup workers release their file handles asynchronously after HTTP stop.
                     time.sleep(.5)
             result['test_servers_stopped']=True

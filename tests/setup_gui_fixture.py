@@ -1,6 +1,7 @@
 """Disposable GUI fixture: fictitious SQLite and PNG files, never user data."""
 from pathlib import Path
 import argparse,base64,csv,importlib.util,io,json,shutil,sqlite3,sys,threading,time,urllib.request,uuid
+from contextlib import closing
 from PIL import Image
 parser=argparse.ArgumentParser();parser.add_argument('--source',type=Path,required=True);parser.add_argument('--workspace',type=Path,required=True);parser.add_argument('--mock-picker',action='store_true');args=parser.parse_args()
 code=args.source.resolve();work=args.workspace.resolve();work.mkdir(parents=True,exist_ok=False)
@@ -15,8 +16,9 @@ base='http://127.0.0.1:'+str(server.server_port)
 (catalog/'outputs/review_service.json').write_text(json.dumps({'url':base}))
 anima=work/'AnimaDex テスト';thumbs=anima/'data/characters/thumbs';thumbs.mkdir(parents=True)
 stream=io.BytesIO();Image.new('RGB',(31,47),(123,78,44)).save(stream,'PNG');raw=stream.getvalue();(thumbs/'Reference.PnG').write_bytes(raw)
-with sqlite3.connect(anima/'data/animadex.db') as db:
+with closing(sqlite3.connect(anima/'data/animadex.db')) as db:
  db.execute('CREATE TABLE characters(character TEXT,name TEXT,trigger TEXT,thumbname TEXT)');db.execute('INSERT INTO characters VALUES(?,?,?,?)',('test hero','Test Hero','test hero, test work','Reference.PnG'))
+ db.commit()
 (catalog/'original_tags').mkdir()
 with (catalog/'original_tags/anima_characters.csv').open('w',newline='',encoding='utf-8-sig') as f:
  writer=csv.DictWriter(f,fieldnames=['tag','category','count','insert_mode']);writer.writeheader();writer.writerow({'tag':'test hero, test work','category':4,'count':1,'insert_mode':'phrase'})
