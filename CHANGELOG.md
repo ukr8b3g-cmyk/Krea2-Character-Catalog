@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.6 — 2026-10-15
+
+- English-first comparison setup/review and an English/Japanese selector in the Editor. Language switching preserves typed inputs and review choices.
+- Separate Close screen, Cancel changes and Stop server actions, with accurate draft/settings explanations and localized server tooltips.
+- Comparison controls, counts, captions, AI labels and draft messages are localized; review language and decisions persist after reload.
+- Clarify that confirmed JSON export does not apply decisions. Improve narrow layouts and add finished-ZIP UI regression tests.
+- Keep all 3,919 accepted images and metadata unchanged; retain previous releases and rejected-workflow downloads.
+
 - v0.9.5 candidate: bundle AnimaDex-Comparison startup and HTML templates; select folders on screen, check connections and open comparison without commands or JSON editing. Optional skill automation shares the same pairing and preparation code. Reconfiguration preserves previous comparisons.
 
 

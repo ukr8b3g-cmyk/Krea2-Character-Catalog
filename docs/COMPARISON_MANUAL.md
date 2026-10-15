@@ -35,7 +35,7 @@ The folder chooser is part of the HTML setup screen. Select a drive or Home, ope
 
 Open the same **START_COMPARISON** file again. It reuses the comparison server if already running. You do not need to find an HTML file or enter setup commands again. Keep the whole comparison folder together, including its `app` folder.
 
-To end the background process, click **Stop comparison / 比較サーバー停止** in the comparison page. Your browser tab stays open. Closing only the browser tab leaves the server available for reopening.
+To end the background process, click **Stop server / サーバー停止** in the comparison page. Your browser tab stays open. Closing only the browser tab leaves the server available for reopening.
 
 Routine comparison display uses the prepared local images; it does not require the catalog server or AnimaDex browser page to remain running. Applying decisions requires the catalog to be running again.
 
@@ -95,3 +95,9 @@ AnimaDexは別のアプリです。[公式サイト](https://animadex.net/)・[�
 
 AnimaDex自体の設定が難しければ、ChatGPT・Claude・Codex等のLLMへ、公式手順を示して依頼できます。例えば「私のOSでAnimaDexを導入し、キャラクター情報とサムネイルをローカルへ取り込んで、画面で表示できるところまで案内してください」と伝え、OSと保存先を知らせます。書き出し用トークンなどの秘密情報は公開しないでください。本カタログがAnimaDexを自動インストールすることはありません。
 
+
+## v0.9.6: language and closing / 言語と終了
+
+English is the initial language. Select English or 日本語 in setup, review, or Editor. Close screen keeps the current in-page inputs (setup) or browser review drafts (comparison); it does not save setup settings or stop the server. You can return to the screen or close the browser tab. Cancel changes restores the last saved setup settings. Stop server separately stops the relevant background service.
+
+初期言語は英語です。設定・比較判定・Editorの言語メニューから切り替えます。「画面を閉じる」は現在の入力／判定下書きを保持しますが、設定の保存やサーバー停止は行いません。戻るボタンで再開するか、ブラウザーのタブを閉じられます。「キャンセル」は最後に保存した設定へ戻し、「サーバー停止」は対象のバックグラウンド処理を止めます。

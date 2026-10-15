@@ -1,6 +1,6 @@
 # 任意のAnimaDex比較連携
 
-**Scope: optional AnimaDex integration; Linux/macOS are unverified.** Core catalog CI does not exercise SQLite DB loading, reference image matching, comparison pages, confirmed-verdict application, or cross-OS relocation/rebuilding of comparison artifacts. Configure paths locally and regenerate comparison material after moving environments. No personal DB or images are used in release CI.
+**Scope: optional AnimaDex integration.** Release CI uses a fictitious SQLite DB and synthetic images to test pairing, comparison display, setup controls and confirmed-verdict application contracts on Windows, macOS and Linux. Real AnimaDex installations, real reference collections and cross-OS relocation/rebuilding remain unverified. Configure paths locally and regenerate comparison material after moving environments. No personal DB or images are used in release CI.
 
 通常の画像追加・情報編集はカタログとEditorでできます。AnimaDexを使った比較が必要な場合だけ、同梱の [krea2-animadex-review](../skills/krea2-animadex-review/SKILL.md) をCodex等へ導入します。キャラクター比較用のスキルで、スタイルは別の参照形式を確認してから扱います。
 
@@ -10,7 +10,7 @@
 
 初回設定は、同梱のAnimaDex-Comparison内のSTART_COMPARISONから画面でフォルダーを選ぶ方法と、Codex等のスキルへ保存場所を伝えて自動設定する方法の二通りです。利用者が設定JSONや深い場所のHTMLを探す必要はありません。
 
-比較はカタログ本体とは別ツールです。設定後は比較専用フォルダーにある、OS名付きの **START_COMPARISON** を開きます。内部のHTMLやJSONを探したり、サーバー用コマンドを入力したりする必要はありません。終了は比較画面の **Stop comparison / 比較サーバー停止** です。判定の下書きはブラウザーに保存し、カタログへの反映には従来どおり選択・確定が必要です。
+比較はカタログ本体とは別ツールです。設定後は比較専用フォルダーにある、OS名付きの **START_COMPARISON** を開きます。内部のHTMLやJSONを探したり、サーバー用コマンドを入力したりする必要はありません。終了は比較画面の **Stop server / サーバー停止** です。判定の下書きはブラウザーに保存し、カタログへの反映には従来どおり選択・確定が必要です。
 
 初回設定やPC移行後の再設定は、設定画面またはアシスタントで行えます。既存の比較を開く依頼なら、その比較を先に探して再利用します。新しい比較を勝手に作り直して判定を消すことはしません。
 
@@ -32,7 +32,7 @@ python scripts/review.py prepare --config "../private/review-config.json" --outp
 python scripts/review.py serve --review-dir "../private/review-001" --port 0
 ```
 
-作業フォルダーは両方のカタログの外に置きます。v0.9.5ではprepareが比較専用のSTART_COMPARISONを用意します。serveコマンドは診断向けの前面サーバーで、通常は不要です。比較画面の終了はCtrl+Cです。同じ作業フォルダーを `--port 0` で再開すると、`review-server.json` に記録した前回のポートを再利用します。検索・判定フィルター・ページ位置・判定下書きは同じブラウザーの同じアドレスで復元します。前回のポートが他のサービスに使われていたら、先に所有者を確認してください。勝手に停止しません。明示的に別ポートを指定した場合は保存先のブラウザー領域が変わるため、先に確定JSONを保存してください。スクリプト自体はPython標準ライブラリだけを使います。
+作業フォルダーは両方のカタログの外に置きます。v0.9.5ではprepareが比較専用のSTART_COMPARISONを用意します。serveコマンドは診断向けの前面サーバーで、通常は不要です。診断用のserveコマンドを前面で動かした場合はCtrl+Cで停止します。通常のSTART_COMPARISONでは画面の「サーバー停止」を使います。同じ作業フォルダーを `--port 0` で再開すると、`review-server.json` に記録した前回のポートを再利用します。検索・判定フィルター・ページ位置・判定下書きは同じブラウザーの同じアドレスで復元します。前回のポートが他のサービスに使われていたら、先に所有者を確認してください。勝手に停止しません。明示的に別ポートを指定した場合は保存先のブラウザー領域が変わるため、先に確定JSONを保存してください。スクリプト自体はPython標準ライブラリだけを使います。
 
 ## 比較と確定
 
@@ -56,3 +56,9 @@ AnimaDexのDB形式が違う場合は、実際の形式を確認して対応を�
 相対パスと空白を含む別フォルダーで、確定分だけの合格／不合格反映を確認しています。現在の実カタログではキャラクター3,809件中3,696組を照合し、113件を未対応として出力できました。実カタログの判定は変更せず、空データの反映が何も消さないことを確認しました。実ブラウザーで両画像、検索リンク、F5とサーバー再起動後の条件・下書き復元を確認済みです。Windowsでの二重起動も拒否します。別PCでの通し検証、実際のAI画像再判定、スタイル画像の対応はこの確認には含みません。
 
 事前に[AnimaDex](https://github.com/zetaneko/AnimaDex)を起動できるように設定し、[公式取り込み手順](https://github.com/zetaneko/AnimaDex/blob/main/docs/import-from-site.md)で参照画像とデータをPCへ保存してください。導入で困った場合はLLMへ公式手順に沿った支援を依頼できます。比較時はAnimaDex本体の起動は不要です。
+
+## v0.9.6: language and closing / 言語と終了
+
+English is the initial language. Select English or 日本語 in setup, review, or Editor. Close screen keeps the current in-page inputs (setup) or browser review drafts (comparison); it does not save setup settings or stop the server. You can return to the screen or close the browser tab. Cancel changes restores the last saved setup settings. Stop server separately stops the relevant background service.
+
+初期言語は英語です。設定・比較判定・Editorの言語メニューから切り替えます。「画面を閉じる」は現在の入力／判定下書きを保持しますが、設定の保存やサーバー停止は行いません。戻るボタンで再開するか、ブラウザーのタブを閉じられます。「キャンセル」は最後に保存した設定へ戻し、「サーバー停止」は対象のバックグラウンド処理を止めます。

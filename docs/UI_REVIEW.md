@@ -1,6 +1,6 @@
-# UI review after v0.9.5
+# v0.9.6 UI review
 
-This source change does not replace the published v0.9.5 ZIP.
+These changes are packaged as v0.9.6; the published v0.9.5 ZIP remains available unchanged.
 
 ## Screens and behavior
 

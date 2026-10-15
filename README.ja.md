@@ -1,8 +1,10 @@
 [English](./README.md)
 
-**v0.9.5 — Windows・macOS・Linux対応。カタログ本体のZIPは1つです。** Python 3.10以上とブラウザーが必要です。初期言語は英語です。
+**v0.9.6 — Windows・macOS・Linux対応。カタログ本体のZIPは1つです。** Python 3.10以上とブラウザーが必要です。初期言語は英語です。
 
-**v0.9.5：起動入口と配布フォルダーを整理しました。** OS名入りのSTART_HEREから起動します。比較は別ツールです。初回設定後は比較専用フォルダーのSTART_COMPARISONから開きます。**以前の修正も保持：** [比較・Editor・プロンプト取得・CSV出力・非表示からの復元・タグ検索・デモ一致の修正](docs/AUDIT_FIXES.md)を完成ZIPに含めます。旧Releaseも残します。ライブデモは同じ検証済みZIPから再作成します。
+**v0.9.6の修正：** カタログ・Editor・比較設定・比較判定の初期言語は英語です。英語／日本語を画面で切り替えられます。「画面を閉じる」は入力や判定下書きを保持し、「キャンセル」は保存済みの設定へ戻します。「サーバー停止」は別の操作です。比較のJSON出力だけではカタログへ判定を反映しません。[UIの動作と検証範囲](docs/UI_REVIEW.md)。
+
+**起動方法と以前の改善も保持：** OS名入りのSTART_HEREから起動します。比較は別ツールです。初回設定後は比較専用フォルダーのSTART_COMPARISONから開きます。**以前の修正も保持：** [比較・Editor・プロンプト取得・CSV出力・非表示からの復元・タグ検索・デモ一致の修正](docs/AUDIT_FIXES.md)を完成ZIPに含めます。旧Releaseも残します。ライブデモは同じ検証済みZIPから再作成します。
 
 | OS | 展開した `Krea2-Character-Catalog` フォルダーで開くもの |
 |---|---|
@@ -12,7 +14,7 @@
 
 画像の追加は起動後の「画像を追加」、編集は画像を開いて「編集」から操作できます。Editor用の別ファイルを探す必要はありません。
 
-v0.9.5の公開ZIPはWindows Server 2022・macOS 15 Intel・Ubuntu 24.04のCI合格を公開条件にします。[実際の検証runとOS別レポート](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.5#release-validation)／[検証範囲](docs/PLATFORMS.md#validation-scope)。macOS・Linuxのデスクトップでのダブルクリック、OSの警告・権限画面、標準ブラウザーの自動起動、実ファイルマネージャー連携は**実機未確認**です。AnimaDex連携は本体とは別の任意機能です。
+v0.9.6の公開ZIPはWindows Server 2022・macOS 15 Intel・Ubuntu 24.04のCI合格を公開条件にします。[実際の検証runとOS別レポート](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.6#release-validation)／[検証範囲](docs/PLATFORMS.md#validation-scope)。macOS・Linuxのデスクトップでのダブルクリック、OSの警告・権限画面、標準ブラウザーの自動起動、実ファイルマネージャー連携は**実機未確認**です。AnimaDex連携は本体とは別の任意機能です。
 
 <img width="1269" height="743" alt="{604FEE72-032C-4BC9-8AA0-8E2AAB612015}" src="https://github.com/user-attachments/assets/f4878143-6a91-4529-917e-c9bdce45d322" />
 
@@ -33,7 +35,7 @@ Krea2-Character-Catalog/
 
 終了は画面の「サーバー停止」です。保存データを保持し、ブラウザーのタブは残ります。再開するときも同じSTART_HEREを開きます。
 
-# Krea2 Character Catalog v0.9.5
+# Krea2 Character Catalog v0.9.6
 
 Krea2で生成したキャラクターとスタイルの見本を、検索・比較しながらプロンプトや元タグと一緒に使うためのローカルカタログです。Windows・macOS・Linux向けの画像追加・編集ツールも含みます。
 
@@ -41,11 +43,11 @@ Krea2で生成したキャラクターとスタイルの見本を、検索・比
 
 ## ダウンロードとライブデモ
 
-- **[v0.9.5のZIPと不合格再生成用JSON](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.5)**
+- **[v0.9.6のZIPと不合格再生成用JSON](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.6)**
 - **[最新版のRelease](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest)**
 - **[閲覧用ライブデモ](https://ukr8b3g-cmyk.github.io/Krea2-Character-Catalog/)**
 
-通常はReleaseの `Krea2-Character-Catalog-v0.9.5.zip` をダウンロードしてください。合格として残した画像・元タグCSV・ワークフロー見本・Editorをまとめて含みます。展開すると `Krea2-Character-Catalog` フォルダーができます。Python本体と生成モデルは同梱していません。
+通常はReleaseの `Krea2-Character-Catalog-v0.9.6.zip` をダウンロードしてください。合格として残した画像・元タグCSV・ワークフロー見本・Editorをまとめて含みます。展開すると `Krea2-Character-Catalog` フォルダーができます。Python本体と生成モデルは同梱していません。
 
 GitHubの **Code → Download ZIP / Source code** は開発用ソースです。画像を含む完成したカタログはReleaseの上記ZIPにあります。各バージョンのReleaseから、その版のZIPを引き続きダウンロードできます。
 
@@ -140,7 +142,7 @@ macOS・Linuxでは、必要に応じて `python` を `python3` に置き換え�
 
 配布コピーのメタデータから元PCのCSVパスを外しました。キャラクター画像のCSVノードは、保存済みの生成文を `manual_prompt` として直接使います。同梱の `ComfyUI-Krea2-Catalog-Tools` を利用者のComfyUIの `custom_nodes` に置き、ComfyUIを再起動してください。モデル名や不足ノードは各自の環境に合わせます。元の画像の圧縮画素データは変更していません。古い画像など生成情報のない例もあり、すべての画像で条件が完全復元できるわけではありません。
 
-不合格画像はカタログ・ZIPに含めていません。再生成用JSONは別の `Krea2-Character-Catalog-Rejected-Workflows-v0.9.5.zip` です。13,486件は保存された生成情報に基づき、旧版11件は元情報がない編集用テンプレートです。不合格のJSONを実行しても合格を保証するものではありません。画像やブランクのカードを本体へ復活させずに、必要なレシピだけを使えます。
+不合格画像はカタログ・ZIPに含めていません。再生成用JSONは別の `Krea2-Character-Catalog-Rejected-Workflows-v0.9.6.zip` です。13,486件は保存された生成情報に基づき、旧版11件は元情報がない編集用テンプレートです。不合格のJSONを実行しても合格を保証するものではありません。画像やブランクのカードを本体へ復活させずに、必要なレシピだけを使えます。
 
 ## 簡易ライブデモ
 
@@ -184,7 +186,7 @@ AIは候補を提案し、人間が最後に判断します。選択して確定
 
 ## English quick start
 
-Download **Krea2-Character-Catalog-v0.9.5.zip** from [Releases](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest), extract it, then double-click `START_HERE - Windows.cmd`. A working Python 3.10+ is reused; a private virtual environment is created when needed. The catalog supports Japanese and English UI. Add your own WebP, PNG or JPEG with the standard Editor; all text fields are optional.
+Download **Krea2-Character-Catalog-v0.9.6.zip** from [Releases](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest), extract it, then double-click `START_HERE - Windows.cmd`. A working Python 3.10+ is reused; a private virtual environment is created when needed. The catalog supports Japanese and English UI. Add your own WebP, PNG or JPEG with the standard Editor; all text fields are optional.
 
 This is an **incomplete, provisional catalog**. Please review and correct images and metadata yourself. The GitHub Pages site is a simplified **read-only static demo**, not the full Python application. Source-code archives do not include the image collection; use the named Release ZIP for the complete catalog.
 
