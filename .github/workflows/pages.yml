@@ -38,7 +38,7 @@ jobs:
           if [ "$RELEASE_TAG" = latest ]; then RELEASE_TAG=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName); fi
           gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "Krea2-Character-Catalog-${RELEASE_TAG}.zip" --dir "$RUNNER_TEMP/catalog-download"
           unzip -q "$RUNNER_TEMP/catalog-download/Krea2-Character-Catalog-${RELEASE_TAG}.zip" -d "$RUNNER_TEMP/catalog-release"
-          python -m pip install -r "$RUNNER_TEMP/catalog-release/Krea2-Character-Catalog/tools/requirements-editor.txt"
+          python -m pip install -r tools/requirements-editor.txt
       - name: Build the static read-only site
         run: |
           python tools/build_static_demo.py --root "$RUNNER_TEMP/catalog-release/Krea2-Character-Catalog" --dest "$RUNNER_TEMP/catalog-site" --download-url "https://github.com/${GITHUB_REPOSITORY}/releases/latest"

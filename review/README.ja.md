@@ -1,8 +1,9 @@
+<!-- Paths refer to the extracted catalog folder; internal files are under app/. -->
 [English](./README.md)
 
 # カタログの操作
 
-Windowsは `open_review.cmd`、Macは `open_review.command`、Linuxは `sh ./open_review.sh` でカタログを開きます。[OS別の起動](../docs/PLATFORMS.md)も参照してください。初期ポートは8790です。キャラクター・スタイルを切り替え、名前や作品・元タグで絞れます。Copyright順は現在の条件に該当する件数の降順です。
+Windowsは `START_HERE - Windows.cmd`、Macは `START_HERE - macOS.command`、Linuxは `sh './START_HERE - Linux.sh'` でカタログを開きます。[OS別の起動](../docs/PLATFORMS.md)も参照してください。初期ポートは8790です。キャラクター・スタイルを切り替え、名前や作品・元タグで絞れます。Copyright順は現在の条件に該当する件数の降順です。
 
 検索条件、表示設定、ページはブラウザーに保存します。非表示・お気に入り・星評価は `outputs/review_state.json` に保存します。リロード・再起動しても保存済みの内容を維持します。
 

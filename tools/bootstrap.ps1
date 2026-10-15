@@ -45,7 +45,12 @@ if ($env:KREA2_CATALOG_PYTHON) {
 } else {
     $candidates=New-Object 'System.Collections.Generic.List[string]'
     foreach ($folder in ($env:PATH -split ';')) {
-        if ($folder) { foreach ($name in @('python.exe','python3.exe','python3.12.exe','python3.11.exe','python3.10.exe')) { $candidates.Add((Join-Path $folder.Trim('"') $name)) } }
+        $catalogFolder=$folder.Trim('"')
+        if ($catalogFolder -and [System.IO.Directory]::Exists($catalogFolder)) {
+            foreach ($name in @('python.exe','python3.exe','python3.12.exe','python3.11.exe','python3.10.exe')) {
+                $candidates.Add([System.IO.Path]::Combine($catalogFolder,$name))
+            }
+        }
     }
     $py=Get-Command py.exe -ErrorAction SilentlyContinue
     if ($py) {
@@ -71,5 +76,7 @@ if ($env:KREA2_CATALOG_PYTHON) {
         Finish-Catalog $code
     }
 }
-& $selected (Join-Path $PSScriptRoot 'launch_catalog.py') @catalogArguments
+$catalogEntry=Join-Path $PSScriptRoot 'startup.py'
+if (!(Test-Path -LiteralPath $catalogEntry -PathType Leaf)) { $catalogEntry=Join-Path $PSScriptRoot 'launch_catalog.py' }
+& $selected $catalogEntry @catalogArguments
 Finish-Catalog $LASTEXITCODE

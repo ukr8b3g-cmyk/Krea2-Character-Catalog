@@ -1,8 +1,9 @@
+<!-- Paths refer to the extracted catalog folder; internal files are under app/. -->
 [日本語 / Japanese](README.ja.md)
 
 # Catalog and Editor usage
 
-Use `open_review.cmd` on Windows, `open_review.command` on macOS, or `sh ./open_review.sh` on Linux from the extracted folder. See [OS setup](../docs/PLATFORMS.md). English is the initial language; Japanese is available from the catalog language menu. The preferred port is 8790. Switch between Characters and Styles, search names and original tags, or filter by copyright and appearance. Copyright sorting places the largest matching groups first.
+Use `START_HERE - Windows.cmd` on Windows, `START_HERE - macOS.command` on macOS, or `sh './START_HERE - Linux.sh'` on Linux from the extracted folder. See [OS setup](../docs/PLATFORMS.md). English is the initial language; Japanese is available from the catalog language menu. The preferred port is 8790. Switch between Characters and Styles, search names and original tags, or filter by copyright and appearance. Copyright sorting places the largest matching groups first.
 
 Filters, language, display settings, and page position are stored in your browser. Visibility, favorites, and star ratings are stored in `outputs/review_state.json` and survive reloads and restarts.
 

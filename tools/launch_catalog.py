@@ -17,6 +17,7 @@ import webbrowser
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'review'))
 from runtime_support import CatalogLock, atomic_json, catalog_version, read_json
+from catalog_layout import app_root
 
 HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
@@ -167,7 +168,7 @@ def stop_service(root, port):
 
 
 def launch(args):
-    root = args.root.resolve()
+    root = app_root(args.root)
     if not (root / 'review/server.py').is_file() or not (root / 'VERSION').is_file():
         raise RuntimeError('Run the launcher from the fully extracted catalog folder.')
     writable(root / 'outputs')

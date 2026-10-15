@@ -1,23 +1,23 @@
 [日本語 / Japanese](README.ja.md)
 
-**v0.9.4 — Windows, macOS, and Linux startup files in one catalog ZIP.** Requires Python 3.10+ and a web browser. English is the default interface language.
+**v0.9.5 — Windows, macOS, and Linux startup files in one catalog ZIP.** Requires Python 3.10+ and a web browser. English is the default interface language.
 
-**v0.9.4 fixes:** The complete ZIP includes [comparison, Editor, prompt extraction, CSV export, hidden restoration, tag search, and demo consistency fixes](docs/AUDIT_FIXES.md). Previous releases remain available. The live demo is rebuilt from the same tested ZIP.
+**v0.9.5:** Clear OS-labelled startup files, a clean download folder, and a separate comparison tool with its own clear startup files. **Earlier fixes retained:** The complete ZIP includes [comparison, Editor, prompt extraction, CSV export, hidden restoration, tag search, and demo consistency fixes](docs/AUDIT_FIXES.md). Previous releases remain available. The live demo is rebuilt from the same tested ZIP.
 
 | Your OS | Open this file in the extracted `Krea2-Character-Catalog` folder |
 |---|---|
-| Windows | Double-click `open_review.cmd`. |
-| macOS | Double-click `open_review.command`. If executable permissions were not preserved, use the Terminal command below. |
-| Linux | Open a terminal in this folder and run `sh ./open_review.sh`. |
+| Windows | Double-click `START_HERE - Windows.cmd`. |
+| macOS | Double-click `START_HERE - macOS.command`. If executable permissions were not preserved, use the Terminal command below. |
+| Linux | Open a terminal in this folder and run `sh './START_HERE - Linux.sh'`. |
 
-For direct image registration, use the matching `open_editor.cmd`, `open_editor.command`, or `open_editor.sh`. All three platforms open the same local browser interface. See [platform setup and test coverage](docs/PLATFORMS.md).
+After startup, click **Add image** to register an image; click a saved image and choose **Edit** to change it. You do not need to find a separate Editor startup file. All three platforms open the same local browser interface. See [platform setup and test coverage](docs/PLATFORMS.md).
 
-The published v0.9.4 ZIP is gated on Windows Server 2022, macOS 15 Intel, and Ubuntu 24.04 CI tests. See the [exact release validation run and downloadable OS reports](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.4#release-validation) and [coverage details](docs/PLATFORMS.md#validation-scope). macOS/Linux desktop double-clicking, security/permission dialogs, default-browser opening, and native file-manager integration remain **unverified on physical desktops**. AnimaDex is an optional, separate workflow.
+Publication of the v0.9.5 ZIP requires Windows Server 2022, macOS 15 Intel, and Ubuntu 24.04 CI tests. See the [exact release validation run and downloadable OS reports](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.5#release-validation) and [coverage details](docs/PLATFORMS.md#validation-scope). macOS/Linux desktop double-clicking, security/permission dialogs, default-browser opening, and native file-manager integration remain **unverified on physical desktops**. AnimaDex is an optional, separate workflow.
 
 <img width="1269" height="743" alt="{604FEE72-032C-4BC9-8AA0-8E2AAB612015}" src="https://github.com/user-attachments/assets/e1904ff8-181d-4792-bb61-95b17fddf90a" />
 
 
-# Krea2 Character Catalog v0.9.4
+# Krea2 Character Catalog v0.9.5
 
 A local catalog of Krea2-generated character and style samples, with searchable tags, reusable prompts, and an image registration and editing tool for Windows, macOS, and Linux. **English is the default interface language.** Japanese is also available; your language choice is remembered.
 
@@ -25,11 +25,11 @@ A local catalog of Krea2-generated character and style samples, with searchable 
 
 ## Downloads and live demo
 
-- **[Download v0.9.4: complete catalog ZIP and rejected-workflow ZIP](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.4)**
+- **[Download v0.9.5: complete catalog ZIP and rejected-workflow ZIP](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/tag/v0.9.5)**
 - **[Latest release](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases/latest)**
 - **[Read-only live demo](https://ukr8b3g-cmyk.github.io/Krea2-Character-Catalog/)**
 
-Download `Krea2-Character-Catalog-v0.9.4.zip` for the complete application. It includes the accepted images, original tag CSVs, workflow examples, and Catalog Editor. Extract it to obtain a folder named `Krea2-Character-Catalog`. Python and generation models are not bundled.
+Download `Krea2-Character-Catalog-v0.9.5.zip` for the complete application. It includes the accepted images, original tag CSVs, workflow examples, and Catalog Editor. Extract it to obtain a folder named `Krea2-Character-Catalog`. Python and generation models are not bundled.
 
 GitHub's **Code → Download ZIP** and automatic **Source code** archives contain the development source, without the image collection or full tag dataset. Use the named ZIP attached to a Release for the complete catalog. Each release keeps its own versioned downloads. `SHA256SUMS.txt` provides checksums for the two ZIPs.
 
@@ -40,6 +40,21 @@ GitHub's **Code → Download ZIP** and automatic **Source code** archives contai
 3. Switch between **Characters** and **Styles**, and search or filter by name, copyright, or appearance tags.
 4. Click an image to enlarge it and copy its reusable Krea2 prompt or original tags.
 
+**Start here:** Open the file with your OS in its name. The `app` folder contains internal files and saved images; you do not need to open it to use the catalog. Keep the whole extracted folder together.
+
+```text
+Krea2-Character-Catalog/
+  START_HERE - Windows.cmd
+  START_HERE - macOS.command
+  START_HERE - Linux.sh
+  README.md
+  README.ja.md
+  AnimaDex-Comparison/  # optional comparison setup and startup
+  app/
+```
+
+**To stop:** Click **Stop server** in the catalog. The browser tab stays open; saved images and decisions remain intact. Reopen the same START_HERE file to use it again.
+
 The preferred local address is `http://127.0.0.1:8790/`. If the port is occupied, the launcher chooses an available port and opens the actual address. It reuses an already-running service for this same catalog and does not replace other applications. The server listens only on the local PC.
 
 The launcher checks for **Python 3.10+**, **Pillow 10 to below 13**, and WebP support. It prefers an existing compatible Python. When necessary, it creates a new private `.catalog-venv` using a detected Python and installs dependencies there, without installing Pillow globally or changing any existing venv. Old or incomplete environments are left intact. The first dependency installation needs internet access. If Python is missing or older than 3.10, use the official [Windows installer](https://www.python.org/downloads/windows/), [macOS installer](https://www.python.org/downloads/macos/), or [Linux installation guide](https://docs.python.org/3/using/unix.html). **After installation, open the same startup file again.** Each startup file checks runnable interpreter versions before loading the Python launcher, and can select a compatible version when an older Python is also installed. Invalid explicit interpreter paths are reported rather than silently ignored. Interactive error windows wait for Enter; redirected input and CI do not wait.
@@ -49,12 +64,12 @@ See [distinct startup error messages and remedies](docs/PLATFORMS.md#startup-err
 To choose a specific Python, set `KREA2_CATALOG_PYTHON`, or run this from the extracted folder with your interpreter path:
 
 ```sh
-python tools/launch_catalog.py --python '<your-python-executable>'
+python app/tools/launch_catalog.py --python '<your-python-executable>'
 ```
 
-On macOS/Linux, use `python3` if `python` is unavailable. If macOS does not allow double-clicking, run `sh ./open_review.command` from this folder. The ZIP includes executable permissions, but some extraction tools do not preserve them.
+On macOS/Linux, use `python3` if `python` is unavailable. If macOS does not allow double-clicking, run `sh './START_HERE - macOS.command'` from this folder. The ZIP includes executable permissions, but some extraction tools do not preserve them.
 
-To stop only this catalog's background server, click **Stop server** in the top-right corner (hover for the explanation), or run `python tools/launch_catalog.py --stop` (or `python3` on macOS/Linux). Closing the browser tab leaves the local service available for reopening.
+To stop only this catalog's background server, click **Stop server** in the top-right corner (hover for the explanation), or run `python app/tools/launch_catalog.py --stop` (or `python3` on macOS/Linux). Closing the browser tab leaves the local service available for reopening.
 
 Search filters, language, display settings, and page position are saved in your browser. Hidden entries, favorites, and star ratings are saved locally. The download starts without personal favorites, ratings, or editor drafts.
 
@@ -91,14 +106,14 @@ Edits are saved separately and affect only changed fields. An empty registration
 
 | Location inside the extracted folder | Contents |
 |---|---|
-| `outputs/staging/<run>/images/` | Included accepted images, reusable prompts, and original tags. |
-| `outputs/staging/<run>/generation_manifest.json` | Links between included images and their records. |
-| `outputs/user_items/<uuid>/` | Images and optional JSON added through the Editor. |
-| `outputs/user_catalog.json` | Added entries. |
-| `outputs/user_catalog_edits.json` | Changes to existing entries. |
-| `outputs/review_state.json` | Your hidden entries, favorites, and star ratings. |
-| `original_tags/anima_characters.csv` | Existing original character-tag CSV, included in the complete Release ZIP. |
-| `original_tags/styles/selected_all_styles.csv` | Optional style suggestions, included in the complete Release ZIP. |
+| `app/outputs/staging/<run>/images/` | Included accepted images, reusable prompts, and original tags. |
+| `app/outputs/staging/<run>/generation_manifest.json` | Links between included images and their records. |
+| `app/outputs/user_items/<uuid>/` | Images and optional JSON added through the Editor. |
+| `app/outputs/user_catalog.json` | Added entries. |
+| `app/outputs/user_catalog_edits.json` | Changes to existing entries. |
+| `app/outputs/review_state.json` | Your hidden entries, favorites, and star ratings. |
+| `app/original_tags/anima_characters.csv` | Existing original character-tag CSV, included in the complete Release ZIP. |
+| `app/original_tags/styles/selected_all_styles.csv` | Optional style suggestions, included in the complete Release ZIP. |
 | `comfyui/workflows/` | Shared ComfyUI workflow examples. |
 | `lists/` | Accepted/rejected name and copyright lists, and review counts. |
 
@@ -124,7 +139,7 @@ The detail panel offers **Open original image** and **Open image folder**. Where
 
 The distribution copy removes the original PC's CSV paths from image metadata. Character workflows use the saved, resolved generation text through `manual_prompt`. Install or update the bundled `ComfyUI-Krea2-Catalog-Tools` under your ComfyUI `custom_nodes` folder and restart ComfyUI. Adjust model names and missing nodes for your environment. The compressed pixel data has not been changed. Some older images have no generation metadata, so not every image can reproduce its complete original settings.
 
-Rejected images and blank rejected cards are excluded from the catalog ZIP. Their regeneration JSONs are available separately as **`Krea2-Character-Catalog-Rejected-Workflows-v0.9.4.zip`**. Of these, 13,486 are based on saved generation metadata, and 11 older entries are editable templates without original metadata. Running a rejected recipe does not guarantee an accepted result. You can use the recipes without adding rejected images back to the catalog.
+Rejected images and blank rejected cards are excluded from the catalog ZIP. Their regeneration JSONs are available separately as **`Krea2-Character-Catalog-Rejected-Workflows-v0.9.5.zip`**. Of these, 13,486 are based on saved generation metadata, and 11 older entries are editable templates without original metadata. Running a rejected recipe does not guarantee an accepted result. You can use the recipes without adding rejected images back to the catalog.
 
 ## Simplified live demo
 
@@ -135,6 +150,8 @@ Try searching, filtering, sorting, character/style switching, enlarging images, 
 See [Building the static demo](docs/LIVE_DEMO.md).
 
 ## Optional AnimaDex comparison
+
+[Set up comparison without Codex or an installed skill](docs/COMPARISON_MANUAL.md).
 
 The layout and organization of this catalog were inspired by [AnimaDex](https://animadex.net/). Normal registration and editing do not require AnimaDex or Codex.
 
@@ -163,3 +180,21 @@ Counts refer to image candidates in the current reviewed set. Alternate outfits 
 In these style checks, many artist styles associated with Pixiv or Danbooru were difficult to reproduce, while some well-known manga artists and illustrators had similar results. This is an observation from this catalog, not evidence establishing which artists were present in the model's training data.
 
 Rights to characters, works, models, and third-party tag data remain with their respective owners. Check the applicable terms with each provider. To report a wrong name, tag, or generated result, include the entry name and catalog version in an Issue.
+
+## Optional AnimaDex comparison
+
+Open `AnimaDex-Comparison/START_COMPARISON` for your OS to select folders on screen. No AI assistant or JSON editing is needed. The optional skill automates the same setup. [Setup guide](docs/COMPARISON_MANUAL.md).
+
+## Before using optional AnimaDex comparison
+
+AnimaDex is a separate application: [website](https://animadex.net/), [local application and installation instructions](https://github.com/zetaneko/AnimaDex), [official dataset import guide](https://github.com/zetaneko/AnimaDex/blob/main/docs/import-from-site.md).
+
+1. Install/configure AnimaDex using its own instructions. Start it once and confirm its local catalog opens correctly.
+2. Import/download the character metadata and reference thumbnails to your PC. The starter samples are not the full reference collection. Follow AnimaDex's current offline dataset export/import procedure; download the images needed for your comparisons, and confirm they display locally. Merely opening the website does not download a local reference library.
+3. Open this catalog's `AnimaDex-Comparison/START_COMPARISON` file and select that AnimaDex installation. If its DB/images use a custom data directory, select them under Advanced settings.
+
+**AnimaDex does not need to remain running.** This tool reads its local SQLite database read-only and serves local reference images directly; it does not call AnimaDex's web server. Keep the downloaded DB and image files in place. Creating/rebuilding pairs and applying decisions require the selected Krea2 catalog to be running. Viewing an already prepared comparison does not require either application's main server.
+
+If installation is confusing, you can ask an LLM assistant such as ChatGPT, Claude, or Codex to help set up AnimaDex using its official instructions. For example: “Help me install AnimaDex on my OS, import its character metadata and thumbnails locally, and confirm the local gallery works before configuring Krea2 comparison.” Tell it your OS and chosen folders; keep export tokens and other credentials private. This catalog does not install AnimaDex automatically.
+
+[Previous versions and downloads / 旧版のダウンロード](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases) — existing releases remain available.

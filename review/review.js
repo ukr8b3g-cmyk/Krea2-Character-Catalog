@@ -230,6 +230,8 @@
   function applyLayout(){applySidebarWidth();$('grid').style.setProperty('--thumbnail-width',thumbnailWidth+'px');$('thumbnail-size').value=thumbnailWidth;$('thumbnail-size-value').textContent=thumbnailWidth+' px';}
   Object.assign(messages.ja,{stopServer:'サーバー停止',stopServerHelp:'このカタログのバックグラウンド処理を停止します。ブラウザーの画面は閉じません。',stoppingServer:'停止中…',serverStoppedButton:'サーバー停止済み',stopped:'サーバーを停止しました。このタブは閉じてかまいません。再開するには、お使いのOS用の起動ファイルをもう一度開いてください。'});
   Object.assign(messages.en,{stopServer:'Stop server',stopServerHelp:"Stop this catalog's background process. The browser tab stays open.",stoppingServer:'Stopping…',serverStoppedButton:'Server stopped',stopped:'The server has stopped. You can close this tab. To restart, open the startup file for your OS again.'});
+  Object.assign(messages.ja,{fileMode:'展開したフォルダーのSTART_HEREから、お使いのOS用の起動ファイルを開いてください。'});
+  Object.assign(messages.en,{fileMode:'Open the START_HERE file for your OS in the extracted catalog folder.'});
   function localizeStopControl(){const button=$('stop-server');button.hidden=demoMode;button.title=t('stopServerHelp');button.textContent=t(serviceStopped?'serverStoppedButton':stoppingService?'stoppingServer':'stopServer');button.disabled=serviceStopped||stoppingService||!token;}
   async function stopCatalogServer(){
     if(demoMode||serviceStopped||stoppingService)return;

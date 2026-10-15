@@ -1,11 +1,12 @@
 """Build a read-only GitHub Pages catalog. Never publishes or edits source data."""
 from pathlib import Path
 import argparse,collections,copy,hashlib,html,json,re,shutil,sys
+from catalog_layout import app_root
 
 PUBLIC_FIELDS={'id','key','run_id','kind','name','name_jp','name_cn','copyright','copyright_en','copyright_links','subcategory','category','subject_type','copy_prompt','copy_tags','facets','image_sha256','generated','record_revision','editor_revision','user_edited','rendered_at','seconds','source_style_id','artist_tag','artist_name_candidate','artist_rank','artist_count','rank_basis','artist_metadata_revision','anima_trigger','danbooru_url'}
 
 def build(root,destination,download_url='',assets=None):
-    root=root.resolve();destination=destination.resolve()
+    root=app_root(root);destination=destination.resolve()
     assets=(assets or root/'review').resolve()
     if not (root/'review/server.py').is_file() or not (root/'outputs').is_dir():raise ValueError('Choose an existing catalog root.')
     if destination==root or destination.is_relative_to(root) or root.is_relative_to(destination):raise ValueError('Use a separate output folder outside the catalog.')

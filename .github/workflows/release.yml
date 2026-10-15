@@ -10,6 +10,7 @@ on:
       - 'skills/**'
       - 'comfyui/**'
       - 'open_*'
+      - 'START_HERE*'
       - 'VERSION*'
       - 'README*'
       - 'docs/**'
@@ -91,6 +92,8 @@ jobs:
         run: python -B tests/check_archive_runtime.py --archive dist/Krea2-Character-Catalog-v${{ needs.build.outputs.version }}.zip --report reports/${{ matrix.os }}.json --test-venv --old-python "${{ steps.old-python.outputs.python-path }}" --browser-test
       - name: Test comparison and metadata contracts from the distributed ZIP
         run: python -B tests/check_audit_contracts.py --archive dist/Krea2-Character-Catalog-v${{ needs.build.outputs.version }}.zip --report reports/audit-${{ matrix.os }}.json --browser-test
+      - name: Test comparison setup launcher and folder selection from the distributed ZIP
+        run: python -B tests/check_setup_gui.py --archive dist/Krea2-Character-Catalog-v${{ needs.build.outputs.version }}.zip --report reports/setup-${{ matrix.os }}.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -103,7 +106,7 @@ jobs:
     needs: [build, test]
     env:
       CATALOG_VERSION: ${{ needs.build.outputs.version }}
-    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    if: (github.event_name == 'workflow_dispatch' && inputs.publish) || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release v'))
     runs-on: ubuntu-24.04
     permissions:
       contents: write

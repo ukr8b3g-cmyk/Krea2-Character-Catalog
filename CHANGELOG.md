@@ -1,5 +1,15 @@
 # Changelog
 
+- v0.9.5 candidate: bundle AnimaDex-Comparison startup and HTML templates; select folders on screen, check connections and open comparison without commands or JSON editing. Optional skill automation shares the same pairing and preparation code. Reconfiguration preserves previous comparisons.
+
+
+## v0.9.5
+
+- New downloads show only clearly OS-labelled START_HERE files, English/Japanese README, and an app folder for internals. Adding and editing images remain in the catalog UI.
+- Optional AnimaDex comparison stays separate from the catalog. First setup leaves clearly labelled START_COMPARISON files, without requiring routine commands or a deep HTML path.
+- Windows startup ignores missing PATH folders/drives instead of aborting Python detection.
+- Existing released versions and original catalogs remain unchanged.
+
 ## v0.9.4 — 2026-10-14
 
 - Restores the top-right **Stop server** / **サーバー停止** control using the existing authenticated shutdown API. Hover text explains that it stops this catalog background process while leaving the browser tab open.

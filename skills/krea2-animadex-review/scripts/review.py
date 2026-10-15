@@ -1,7 +1,12 @@
 """Portable optional character comparison. Standard-library only; no generation."""
 from pathlib import Path
-import argparse,collections,csv,datetime,hashlib,json,os,shutil,socket,sqlite3,sys,urllib.parse,urllib.request
+import argparse,collections,csv,datetime,hashlib,json,os,shutil,socket,sqlite3,sys,urllib.parse,urllib.request,secrets,threading
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
+from socketserver import TCPServer
+
+def review_root(folder):
+    folder=Path(folder).resolve()
+    return folder/'app' if (folder/'app/pairs.json').is_file() else folder
 
 def read(path):return json.loads(Path(path).read_text(encoding='utf-8-sig'))
 def sha(path):
@@ -26,6 +31,7 @@ def environment(config_path):
         if not value:raise ValueError('Set '+name+' in your private config.')
         path=Path(value).expanduser();return (path if path.is_absolute() else config_path.parent/path).resolve()
     root=location('catalog_root');anima=location('animadex_root')
+    if not (root/'review/server.py').is_file() and (root/'app/review/server.py').is_file():root=root/'app'
     if not (root/'review/server.py').is_file() or not anima.is_dir():raise ValueError('Catalog or AnimaDex folder does not exist.')
     url=data.get('catalog_url')
     if not url:
@@ -53,9 +59,7 @@ def safe_path(root,relative):
     root=Path(root).resolve();path=(root/relative).resolve()
     if not path.is_relative_to(root) or not path.is_file():raise ValueError('Missing or out-of-root image.')
     return path
-def prepare(env,output,copyright=''):
-    output=Path(output).resolve()
-    if output.exists() or any(output.is_relative_to(Path(env[k])) or Path(env[k]).is_relative_to(output) for k in ['catalog_root','animadex_root']):raise ValueError('Use a new review folder outside both catalogs.')
+def collect(env,copyright=''):
     index=collections.defaultdict(list)
     for r in database(env):index[norm(r['trigger'] or '')].append(r)
     with Path(env['source_csv']).open(encoding='utf-8-sig',newline='') as stream:
@@ -90,15 +94,29 @@ def prepare(env,output,copyright=''):
         image_sha=cached_sha(generated)
         if image_sha!=item['image_sha256']:raise ValueError('Catalog image changed; refresh before comparison.')
         pairs.append({'key':item['key'],'name':item['name'],'copyright':item['copyright'],'catalog_identity':','.join(item['copy_tags'].split(',')[:2]),'catalog_image':str(generated),'reference_image':str(reference),'catalog_image_sha256':image_sha,'reference_image_sha256':cached_sha(reference),'reference_slug':source['character'],'reference_name':source['name']})
-    stats['available_pairs']=len(pairs);output.mkdir();payload={'schema':'krea2-portable-pairs-v1','environment':env,'pairs':pairs,'stats':dict(stats)}
+    for name in ['bootstrap.cmd','bootstrap.ps1','bootstrap.sh']:
+        if not (root/'tools'/name).is_file():raise ValueError('Use a complete catalog installation; native startup helpers are missing.')
+    stats['available_pairs']=len(pairs)
+    return {'schema':'krea2-portable-pairs-v1','environment':env,'pairs':pairs,'stats':dict(stats)},unresolved
+
+def prepare(env,output,copyright=''):
+    output=Path(output).resolve();catalog=Path(env['catalog_root']);root=catalog
+    if catalog.name=='app' and any((catalog.parent/name).is_file() for name in ['START_HERE - Windows.cmd','START_HERE - macOS.command','START_HERE - Linux.sh']):catalog=catalog.parent
+    if output.exists() or any(output.is_relative_to(base) or base.is_relative_to(output) for base in [catalog,Path(env['animadex_root'])]):raise ValueError('Use a new review folder outside both catalogs.')
+    payload,unresolved=collect(env,copyright);stats=payload['stats']
+    home=output;output=home/'app';output.mkdir(parents=True)
     (output/'pairs.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding='utf-8')
+    (output/'settings.json').write_text(json.dumps({key:value for key,value in env.items() if key!='catalog_url'},ensure_ascii=False,indent=2),encoding='utf-8')
     with (output/'unresolved.csv').open('w',encoding='utf-8-sig',newline='') as stream:
         writer=csv.DictWriter(stream,fieldnames=['key','name','copyright','identity','reason']);writer.writeheader();writer.writerows(unresolved)
     assets=Path(__file__).resolve().parent.parent/'assets'
     for name in ['index.html','compare.js','compare.css']:shutil.copy2(assets/name,output/name)
+    sys.path.insert(0,str(Path(__file__).resolve().parent))
+    from comparison_launcher import setup
+    setup(root,home,Path(__file__).resolve())
     return dict(stats)
 def validated_decisions(env,review_dir,decisions,selected_keys=None):
-    payload=read(Path(review_dir)/'pairs.json')
+    payload=read(review_root(review_dir)/'pairs.json')
     if Path(payload['environment']['catalog_root']).resolve()!=Path(env['catalog_root']).resolve() or Path(payload['environment']['thumbs_root']).resolve()!=Path(env['thumbs_root']).resolve():raise ValueError('Review belongs to a different environment.')
     source=read(decisions)
     if source.get('schema')!='krea2-portable-human-review-v1' or not isinstance(source.get('decisions'),list):raise ValueError('Invalid decision export.')
@@ -141,7 +159,7 @@ def apply(env,review_dir,decisions,dry_run=False):
     result={'selected_confirmed':len(rows),'match':sum(r['decision']=='match' for r in rows),'mismatch':sum(r['decision']=='mismatch' for r in rows),'dry_run':dry_run,
             'visibility_changes':len(plan['restore'])+len(plan['hide']),'unchanged':len(plan['unchanged']),'plan':plan}
     if dry_run or not rows:return result
-    root=Path(env['catalog_root']);review_dir=Path(review_dir).resolve()
+    root=Path(env['catalog_root']);review_dir=review_root(review_dir)
     if review_dir.is_relative_to(root):raise ValueError('Keep snapshots outside the catalog.')
     path=root/'outputs/user_comparison_decisions.json';previous=read(path) if path.exists() else {'schema':'krea2-portable-human-review-v1','decisions':[]}
     if previous.get('schema')!='krea2-portable-human-review-v1' or not isinstance(previous.get('decisions'),list) or any(not isinstance(r,dict) or 'key' not in r for r in previous['decisions']):raise ValueError('Existing comparison decisions are invalid; no visibility changes were applied.')
@@ -177,7 +195,7 @@ def apply(env,review_dir,decisions,dry_run=False):
     checkpoint['completed']=True;write_json(checkpoint_path,checkpoint)
     result['verified']=True;result['snapshot']=str(snapshot);return result
 def serve(review_dir,port):
-    root=Path(review_dir).resolve();payload=read(root/'pairs.json');pairs=payload['pairs'];env=payload['environment']
+    root=review_root(review_dir);payload=read(root/'pairs.json');pairs=payload['pairs'];env=payload['environment']
     service_path=root/'review-server.json'
     if port==0 and service_path.is_file():
         previous=read(service_path);port=previous.get('port')
@@ -188,7 +206,11 @@ def serve(review_dir,port):
             if urllib.parse.urlsplit('http://'+self.headers.get('Host','')).hostname not in {'127.0.0.1','localhost','::1'}:self.send_error(403);return
             url=urllib.parse.urlsplit(self.path)
             try:
-                if url.path=='/pair-image':
+                if url.path in {'/api/info','/api/bootstrap'}:
+                    value={'app':'Krea2AnimaDexComparison','review_dir':str(root),'pid':os.getpid()}
+                    if url.path=='/api/bootstrap':value.update({'token':info['token'],'setup_url':env.get('setup_url','')})
+                    content=json.dumps(value).encode();mime='application/json'
+                elif url.path=='/pair-image':
                     q=urllib.parse.parse_qs(url.query);index=int(q['id'][0]);side=q['side'][0]
                     if index<0 or index>=len(pairs) or side not in {'catalog','reference'}:raise ValueError('Invalid pair')
                     item=pairs[index];base=Path(env['catalog_root'])/'outputs' if side=='catalog' else Path(env['thumbs_root']);relative=str(Path(item[side+'_image']).relative_to(base));path=safe_path(base,relative)
@@ -204,13 +226,26 @@ def serve(review_dir,port):
                     content=(root/name).read_bytes();mime='text/html' if name.endswith('.html') else 'text/javascript' if name.endswith('.js') else 'text/csv' if name.endswith('.csv') else 'text/css'
                 self.send_response(200);self.send_header('Content-Type',mime+'; charset=utf-8' if not mime.startswith('image/') else mime);self.send_header('Content-Length',str(len(content)));self.end_headers();self.wfile.write(content)
             except (ValueError,KeyError,OSError):self.send_error(400)
+        def do_POST(self):
+            origin='http://127.0.0.1:'+str(self.server.server_port)
+            if self.headers.get('Host')!='127.0.0.1:'+str(self.server.server_port) or self.headers.get('Origin',origin)!=origin or not secrets.compare_digest(self.headers.get('X-Comparison-Token',''),info['token']):
+                self.send_error(403);return
+            if self.path!='/api/shutdown' or self.headers.get('Content-Type','').split(';')[0]!='application/json':self.send_error(400);return
+            try:
+                length=int(self.headers.get('Content-Length','0'))
+                if not 0<length<1000:raise ValueError('Invalid request')
+                if not isinstance(json.loads(self.rfile.read(length)),dict):raise ValueError('Invalid request')
+            except (ValueError,TypeError):self.send_error(400);return
+            content=b'{"stopped":true}';self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(content)));self.end_headers();self.wfile.write(content)
+            threading.Thread(target=self.server.shutdown,daemon=True).start()
     class ReviewServer(ThreadingHTTPServer):
         allow_reuse_address=os.name!='nt'
         def server_bind(self):
             if os.name=='nt':self.socket.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
-            super().server_bind()
+            TCPServer.server_bind(self)
+            self.server_name='localhost';self.server_port=self.server_address[1]
     with ReviewServer(('127.0.0.1',port),Handler) as server:
-        info={'schema':'krea2-portable-review-server-v1','url':'http://127.0.0.1:'+str(server.server_port)+'/','port':server.server_port,'pid':os.getpid(),'read_only':True}
+        info={'schema':'krea2-portable-review-server-v1','url':'http://127.0.0.1:'+str(server.server_port)+'/','port':server.server_port,'pid':os.getpid(),'read_only':True,'review_dir':str(root),'token':secrets.token_urlsafe(24)}
         temporary=service_path.with_suffix('.json.tmp');temporary.write_text(json.dumps(info,indent=2),encoding='utf-8');os.replace(temporary,service_path)
         print(json.dumps(info),flush=True)
         try:server.serve_forever()

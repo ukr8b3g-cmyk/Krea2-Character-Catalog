@@ -7,6 +7,22 @@ description: Compare locally installed Krea2 character catalog images with Anima
 
 Use the catalog's standard Editor for adding images and editing metadata. This optional skill pairs existing character images with a local AnimaDex installation and applies explicit selected decisions. It does not install AnimaDex, generate images, restart services, or publish files.
 
+## Human-facing entrypoint
+
+For a request to open a past comparison, find and reopen the existing material first; do not regenerate pairs or overwrite decisions. Do not make the user find a nested HTML file, edit JSON, copy a URL, or run server commands for routine use.
+
+For new distributions, the normal catalog opens from the clearly OS-labelled START_HERE file at the extracted folder's top level. Accept that top-level folder as catalog_root; the helper resolves its internal app folder. Keep implementation files out of the user's startup choices.
+
+Keep the comparison separate from the catalog. After initial setup, prepare leaves START_COMPARISON files labelled by OS at the comparison folder's top level, with internal files under app. The user opens that file to start or reopen the same comparison and uses Stop comparison in the comparison screen to end its background server. Do not add a comparison button or extra startup steps to the main catalog. Verify the actual entrypoint, image pair display, service reuse and stop behavior before calling setup complete. For an older existing comparison, reopen its current screen rather than rebuilding it.
+
+Environment discovery and the commands below are for the assistant or advanced troubleshooting, not mandatory manual steps for the end user. Ask only for a missing folder location, complete the setup, and leave a reusable human-facing entrypoint.
+
+## Two supported setup methods
+
+The complete ZIP includes `AnimaDex-Comparison/START_COMPARISON` for each OS. Without a skill, it opens a folder-selection setup screen, checks connections, and prepares the same bundled HTML comparison. No command or JSON editing is required.
+
+With this skill, discover the selected catalog and AnimaDex folders and use the existing inspect/prepare helpers below. Do not build a different HTML page or require interactive folder picking when the user has already supplied paths. Both methods use the same collect/prepare code and selected-human-verdict apply contract. Leave the prepared workspace's START_COMPARISON files as the everyday entrypoint. For screen-based setup, use the complete ZIP's comparison launcher; root catalog startup remains independent.
+
 ## Find the environment
 
 Use the user's specified folders first. Otherwise check the current catalog folder and its launcher/settings. If AnimaDex's data folder is unknown, request that location only; do not assume a drive, user name, port, or install path. Put environment values in a private copy of [config.example.json](config.example.json), resolving relative paths against that config file. Never include the filled config or generated review folders in a release.
@@ -19,11 +35,11 @@ The bundled adapter supports AnimaDex's `characters` table with `character`, `na
 
 Run `prepare --config <config> --output <new folder outside both catalogs>`, optionally with `--copyright <work>`. The helper checks the first two CSV identity tags and requires one exact AnimaDex trigger after case/whitespace normalization. Ambiguous or missing matches are reported in `unresolved.csv`, not guessed. It records both image SHAs and does not copy images.
 
-Open `pairs.json` to inspect the matched paths. Visually compare both images using the available local image/browser tools. A successful tag match is identity evidence, not proof of visual similarity. Report the actual compared count and elapsed time, including time per compared image when requested. Do not claim AI judging happened merely because the pairing script ran.
+The assistant can inspect `pairs.json` to verify matched paths; do not send the user there to open the comparison. Visually compare both images using the available local image/browser tools. A successful tag match is identity evidence, not proof of visual similarity. Report the actual compared count and elapsed time, including time per compared image when requested. Do not claim AI judging happened merely because the pairing script ran.
 
-Use `serve --review-dir <folder> --port 0` for a local HTTP comparison screen. The review folder records its chosen port in `review-server.json`; restarting the same folder with `--port 0` reuses that address so browser drafts, filters and page position survive. If that port is occupied, inspect its owner rather than stopping it or silently changing the address. Record the printed URL/PID and stop only a service you started when done. The comparison screen stores choices in the browser and exports confirmed selected decisions; it does not automatically change the catalog. The user may also explicitly confirm selected AI suggestions in the conversation.
+For routine use, open the generated START_COMPARISON entrypoint. The following foreground server command is an advanced diagnostic fallback: use `serve --review-dir <folder> --port 0` for a local HTTP comparison screen. The review folder records its chosen port in `review-server.json`; restarting the same folder with `--port 0` reuses that address so browser drafts, filters and page position survive. If that port is occupied, inspect its owner rather than stopping it or silently changing the address. Record the printed URL/PID and stop only a service you started when done. The comparison screen stores choices in the browser and exports confirmed selected decisions; it does not automatically change the catalog. The user may also explicitly confirm selected AI suggestions in the conversation.
 
-AI suggestions can be saved in `ai_candidates.json` inside the review folder: an array of `key`, `catalog_image_sha256`, `reference_image_sha256`, `decision` (`match`, `mismatch`, `hold`), and `reason`. They must come from actual two-image comparison. The page accepts only suggestions for the current pair SHAs, labels them as AI suggestions, and leaves final confirmation to the user.
+Prepared pairs, settings and assets live under the comparison folder's `app` directory; the helper accepts the outer comparison folder for serve/apply. AI suggestions can be saved in `app/ai_candidates.json`: an array of `key`, `catalog_image_sha256`, `reference_image_sha256`, `decision` (`match`, `mismatch`, `hold`), and `reason`. They must come from actual two-image comparison. The page accepts only suggestions for the current pair SHAs, labels them as AI suggestions, and leaves final confirmation to the user.
 
 ## Apply confirmed choices
 

@@ -5,10 +5,12 @@ import csv
 import hashlib
 import io
 import re
+import posixpath
 import json
 import shutil
 import stat
 import urllib.request
+from urllib.parse import quote,unquote
 import zipfile
 
 BASE_NAME = 'Krea2-Character-Catalog-v0.9.zip'
@@ -100,7 +102,7 @@ def build(source, destination, base, rejected):
     if entries['review/index.html'].count(b'<html lang="en">') != 1:
         raise ValueError('The catalog HTML version stamp cannot be applied.')
     entries['review/index.html'] = entries['review/index.html'].replace(b'<html lang="en">', ('<html lang="en" data-catalog-version="'+version+'">').encode('ascii'), 1)
-    forbidden = ('__pycache__','.venv','review_service.json','python_runtime.json','review_state.json','user_catalog.json','user_catalog_edits.json')
+    forbidden = ('__pycache__','.venv','review_service.json','python_runtime.json','review_state.json','user_catalog.json','user_catalog_edits.json','comparison_setup.json','setup-settings.json','setup-service.json')
     for name in entries:
         if any(part in forbidden or part.startswith(('.venv','.catalog-venv')) for part in PurePosixPath(name).parts) or name.endswith(('.log','.lock','.pyc')):
             raise ValueError('Private runtime file in archive: ' + name)
@@ -114,8 +116,42 @@ def build(source, destination, base, rejected):
         assert len(list(csv.DictReader(io.StringIO(entries['lists/'+name+'.csv'].decode('utf-8-sig'))))) == count
     destination.mkdir(parents=True,exist_ok=True)
     archive = destination / ('Krea2-Character-Catalog-v'+version+'.zip')
+    public_entries = {}
+    starters = {'START_HERE - Windows.cmd','START_HERE - macOS.command','START_HERE - Linux.sh'}
+    for name,data in entries.items():
+        if name.startswith(('.github/','.git')) or name.startswith('open_') and '/' not in name:
+            continue
+        if name in {'README.md','README.ja.md'} or name in starters:
+            public_entries[name]=data
+        else:
+            public_entries['app/'+name]=data
+    comparison='AnimaDex-Comparison/'
+    public_entries[comparison+'README.md']=b'# AnimaDex comparison\n\nOpen START_COMPARISON for your OS. The first screen lets you choose folders without commands or JSON editing. Later starts reopen your prepared comparison. See ../app/docs/COMPARISON_MANUAL.md for English and Japanese instructions.\n'
+    for name in ['bootstrap.cmd','bootstrap.ps1','bootstrap.sh']:
+        public_entries[comparison+'app/tools/'+name]=entries['tools/'+name]
+    public_entries[comparison+'app/tools/startup.py']=b"from pathlib import Path\nimport sys\nhome=Path(__file__).resolve().parents[2]\ncatalog=home.parent\nsys.path.insert(0,str(catalog/'app/tools'))\nfrom comparison_setup import main\nsys.argv[1:1]=['--home',str(home),'--catalog-root',str(catalog)]\nmain()\n"
+    public_entries[comparison+'START_COMPARISON - Windows.cmd']=b'@echo off\r\nsetlocal\r\ntitle Krea2 - AnimaDex Comparison\r\ncall "%~dp0app\\tools\\bootstrap.cmd" %*\r\nexit /b %errorlevel%\r\n'
+    shell=b'#!/bin/sh\ncomparison_home=$(CDPATH= cd -- "${0%/*}" && pwd) || exit 1\nexec /bin/sh "$comparison_home/app/tools/bootstrap.sh" "$@"\n'
+    for name in ['START_COMPARISON - macOS.command','START_COMPARISON - Linux.sh']:public_entries[comparison+name]=shell
+    for name in ['index.html','compare.js','compare.css']:
+        public_entries[comparison+'app/templates/'+name]=entries['skills/krea2-animadex-review/assets/'+name]
+    def public_path(name):return name if name in starters | {'README.md','README.ja.md'} else 'app/'+name
+    for name in entries:
+        target=public_path(name)
+        if not name.endswith('.md') or target not in public_entries:continue
+        def relocate_link(match):
+            link=match.group(1)
+            if '://' in link or link.startswith(('#','/','mailto:')):return match.group(0)
+            path,sep,fragment=link.partition('#')
+            original=posixpath.normpath(posixpath.join(posixpath.dirname(name),unquote(path)))
+            if original not in entries or public_path(original) not in public_entries:return match.group(0)
+            relative=posixpath.relpath(public_path(original),posixpath.dirname(target) or '.')
+            return ']('+quote(relative,safe='/._-')+(sep+fragment if sep else '')+')'
+        public_entries[target]=re.sub(r'\]\(([^)]+)\)',relocate_link,public_entries[target].decode('utf-8-sig')).encode('utf-8')
+    assert starters <= public_entries.keys(), 'All three clear startup files must be included.'
+    assert {name for name in public_entries if '/' not in name} == starters | {'README.md','README.ja.md'}
     with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as output:
-        for name,data in sorted(entries.items()):
+        for name,data in sorted(public_entries.items()):
             entry = zipfile.ZipInfo(PREFIX+name,date_time=(2026,10,14,0,0,0))
             entry.create_system = 3
             entry.external_attr = (stat.S_IFREG | (0o755 if name.endswith(('.command','.sh')) else 0o644)) << 16
@@ -124,12 +160,12 @@ def build(source, destination, base, rejected):
     with zipfile.ZipFile(archive) as check:
         assert check.testzip() is None
         with zipfile.ZipFile(base) as old:
-            assert all(check.read(PREFIX+name) == old.read(PREFIX+name) for name in images)
+            assert all(check.read(PREFIX+'app/'+name) == old.read(PREFIX+name) for name in images)
     rejected_output = destination / ('Krea2-Character-Catalog-Rejected-Workflows-v'+version+'.zip')
     shutil.copyfile(rejected,rejected_output)
     sums = ''.join(digest(p)+'  '+p.name+'\n' for p in (archive,rejected_output))
     (destination/'SHA256SUMS.txt').write_text(sums,encoding='ascii',newline='\n')
-    report = {'version':version,'files':len(entries),'images':len(images),'all_images_unchanged':True,'catalog_sha256':digest(archive),'catalog_bytes':archive.stat().st_size,'rejected_sha256':digest(rejected_output)}
+    report = {'version':version,'files':len(public_entries),'images':len(images),'all_images_unchanged':True,'catalog_sha256':digest(archive),'catalog_bytes':archive.stat().st_size,'rejected_sha256':digest(rejected_output),'layout':'clear-start-app-folder','root_files':sorted(starters | {'README.md','README.ja.md'})}
     (destination/'build-validation.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     print(json.dumps(report),flush=True)
     return archive

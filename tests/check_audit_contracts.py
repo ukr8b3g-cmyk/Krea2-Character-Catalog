@@ -11,6 +11,7 @@ import json
 import shutil
 import socket
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import threading
@@ -24,6 +25,7 @@ from PIL import Image, PngImagePlugin
 SOURCE = Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(SOURCE/'tools'))
 from package_release import safe_extract
+from catalog_layout import app_root
 
 
 def write_json(path,value):
@@ -50,7 +52,7 @@ def run(archive,report_path,browser_test=False,code_root=None):
         workspace=Path(temporary)/'日本語 fixture with spaces';workspace.mkdir()
         if archive:
             safe_extract(archive,workspace/'release')
-            code_root=workspace/'release/Krea2-Character-Catalog'
+            code_root=app_root(workspace/'release/Krea2-Character-Catalog')
         else:code_root=Path(code_root).resolve()
         sys.path.insert(0,str(code_root/'review'))
         from server import make_server
@@ -59,8 +61,11 @@ def run(archive,report_path,browser_test=False,code_root=None):
         catalog=workspace/'Catalog 本体';catalog.mkdir()
         shutil.copy2(code_root/'VERSION',catalog/'VERSION')
         shutil.copytree(code_root/'review',catalog/'review')
+        shutil.copytree(code_root/'tools',catalog/'tools')
+        shutil.copytree(code_root/'skills',catalog/'skills')
         server=make_server(catalog,0);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start();servers.append((server,thread))
         base='http://127.0.0.1:'+str(server.server_port)
+        write_json(catalog/'outputs/review_service.json',{'url':base})
         api=lambda route,body=None:skill.api(base,route,body,server.token)
         anima=workspace/'AnimaDex test data';thumbs=anima/'data/characters/thumbs';thumbs.mkdir(parents=True)
         source=catalog/'original_tags/anima_characters.csv';source.parent.mkdir()
@@ -84,9 +89,15 @@ def run(archive,report_path,browser_test=False,code_root=None):
             env=skill.environment(config);review_dir=workspace/'comparison with spaces'
             prepared=skill.prepare(env,review_dir)
             assert prepared['available_pairs']==4 and prepared['missing_or_ambiguous_identity']==0
-            pairs=skill.read(review_dir/'pairs.json')['pairs']
+            pairs=skill.read(skill.review_root(review_dir)/'pairs.json')['pairs']
             assert all(Path(p['reference_image']).is_file() and Path(p['catalog_image']).is_file() for p in pairs)
             checks.append('readonly_sqlite_exact_csv_pairs_unicode_case_paths')
+            manual_dir=workspace/'manual comparison without skill'
+            manual=subprocess.run([sys.executable,'-B',str(catalog/'tools/create_comparison.py'),'--animadex-root',str(anima),'--output',str(manual_dir),'--json'],capture_output=True,text=True,timeout=30)
+            assert manual.returncode==0,manual.stderr
+            assert json.loads(manual.stdout)['stats']['available_pairs']==4
+            assert (manual_dir/'START_COMPARISON - Windows.cmd').is_file() and (manual_dir/'app/settings.json').is_file()
+            checks.append('manual_comparison_setup_without_skill_installation_or_json_editing')
             for pair in pairs:
                 row={k:pair[k] for k in ['key','catalog_image_sha256','reference_image_sha256']}
                 row.update({'decision':'match' if len(rows)<2 else 'mismatch','selected':True,'confirmed':True});rows.append(row)
@@ -99,7 +110,7 @@ def run(archive,report_path,browser_test=False,code_root=None):
             plan=skill.apply(env,review_dir,decisions,dry_run=True)
             assert plan['visibility_changes']==2 and plan['unchanged']==2 and state_file.read_bytes()==before
             assert not (catalog/'outputs/user_comparison_decisions.json').exists()
-            assert not (review_dir/'apply-checkpoint.json').exists()
+            assert not (skill.review_root(review_dir)/'apply-checkpoint.json').exists()
             checks.append('dry_run_plans_two_changes_two_noops_without_writes')
             actual_api=skill.api;writes=[]
             def observe(url,route,body=None,token=''):
@@ -129,11 +140,11 @@ def run(archive,report_path,browser_test=False,code_root=None):
                 with patch.object(skill,'api',side_effect=fail_hide):skill.apply(env,review_dir,decisions)
                 raise AssertionError('Expected interruption')
             except OSError:pass
-            checkpoint=skill.read(review_dir/'apply-checkpoint.json')
+            checkpoint=skill.read(skill.review_root(review_dir)/'apply-checkpoint.json')
             assert not checkpoint['completed'] and checkpoint['applied']==[rows[0]['key']] and journal.read_bytes()==journal_before
             resumed=skill.apply(env,review_dir,decisions)
             assert resumed['visibility_changes']==1 and resumed['verified']
-            assert skill.read(review_dir/'apply-checkpoint.json')['completed']
+            assert skill.read(skill.review_root(review_dir)/'apply-checkpoint.json')['completed']
             checks.append('partial_failure_checkpoint_safe_retry')
 
             state_before=state_file.read_bytes();journal_before=journal.read_bytes()

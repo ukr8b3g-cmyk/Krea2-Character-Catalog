@@ -21,6 +21,7 @@ from PIL import Image
 SOURCE=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(SOURCE/'tools'))
 from package_release import safe_extract
+from catalog_layout import app_root,startup_command
 HTTP=urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
@@ -37,13 +38,13 @@ def run(archive,report_path,test_venv=False,keep=False,old_python=None,browser_t
     temporary=tempfile.TemporaryDirectory(prefix='Krea2 ZIP test ')
     install=Path(temporary.name)/'Folder with spaces 日本語'
     safe_extract(archive,install)
-    root=install/'Krea2-Character-Catalog'
+    home=install/'Krea2-Character-Catalog'
+    root=app_root(home)
     launcher=root/'tools/launch_catalog.py'
     env={**os.environ,'KREA2_CATALOG_PYTHON':sys.executable,'KREA2_CATALOG_NO_PAUSE':'1','PYTHONDONTWRITEBYTECODE':'1'}
     extension='.cmd' if os.name=='nt' else '.command' if sys.platform=='darwin' else '.sh'
     def command(editor=False):
-        entry=str(root/('open_editor' if editor else 'open_review'))+extension
-        return [entry] if os.name=='nt' else ['sh',entry]
+        return startup_command(home,editor)
     def launch(extra=(),editor=False):
         result=subprocess.run(command(editor)+['--no-open','--json',*extra],env=env,cwd=temporary.name,capture_output=True,text=True,timeout=100,shell=os.name=='nt')
         error_log=root/'outputs/review_server.err.log'

@@ -5,12 +5,12 @@ import os
 import shutil
 import subprocess
 import sys
+sys.path.insert(0,str(Path(__file__).resolve().parent.parent/'tools'))
+from catalog_layout import app_root,catalog_home,startup_command,START_FILES
 
 
 def command(root, editor=False):
-    name='open_editor' if editor else 'open_review'
-    if os.name=='nt': return [str(root/(name+'.cmd'))]
-    return ['/bin/sh',str(root/(name+('.command' if sys.platform=='darwin' else '.sh')))]
+    return startup_command(root,editor)
 
 
 def invoke(root, extra=(), env=None, editor=False, timeout=180):
@@ -20,11 +20,12 @@ def invoke(root, extra=(), env=None, editor=False, timeout=180):
 
 def check(root, directory, old_python=None):
     # These files all come from the extracted release ZIP, not the checkout.
+    root=app_root(root)
     fixture=directory/'Bootstrap cases 空白'
-    fixture.mkdir()
-    for folder in ('tools','review'): shutil.copytree(root/folder,fixture/folder)
-    shutil.copy2(root/'VERSION',fixture/'VERSION')
-    for file in root.glob('open_*'): shutil.copy2(file,fixture/file.name)
+    fixture.mkdir();internal=fixture/'app';internal.mkdir()
+    for folder in ('tools','review'): shutil.copytree(root/folder,internal/folder)
+    shutil.copy2(root/'VERSION',internal/'VERSION')
+    for name in START_FILES.values():shutil.copy2(catalog_home(root)/name,fixture/name)
     empty=directory/'empty PATH';empty.mkdir()
     env={**os.environ,'CI':'true','PYTHONDONTWRITEBYTECODE':'1','PYTHONIOENCODING':'utf-8'}
     env.pop('KREA2_CATALOG_PYTHON',None)
@@ -55,13 +56,13 @@ def check(root, directory, old_python=None):
         compatible=json.loads(result.stdout.splitlines()[-1])['python']
         subprocess.run([compatible,'-c','import sys; assert sys.version_info >= (3,10)'],check=True)
         checks.append('mixed_real_python_39_and_compatible')
-        subprocess.run([old_python,'-m','venv','--without-pip',str(fixture/'.venv')],check=True)
-        before={p.relative_to(fixture/'.venv').as_posix():p.read_bytes() for p in (fixture/'.venv').rglob('*') if p.is_file()}
+        subprocess.run([old_python,'-m','venv','--without-pip',str(internal/'.venv')],check=True)
+        before={p.relative_to(internal/'.venv').as_posix():p.read_bytes() for p in (internal/'.venv').rglob('*') if p.is_file()}
     else:
         before={}
         checks.append('real_python_39_scenarios_NOT_RUN')
     # Simulate an incomplete/foreign existing environment; never repair or remove it.
-    legacy=fixture/'.catalog-venv';legacy.mkdir();(legacy/'keep.txt').write_text('DO NOT CHANGE')
+    legacy=internal/'.catalog-venv';legacy.mkdir();(legacy/'keep.txt').write_text('DO NOT CHANGE')
     valid={**env,'KREA2_CATALOG_PYTHON':sys.executable}
     result=invoke(fixture,['--resolve-only','--force-venv'],valid,timeout=240)
     assert result.returncode==0,result.stderr
@@ -69,7 +70,7 @@ def check(root, directory, old_python=None):
     assert '.catalog-venv-1' in created.parts
     assert (legacy/'keep.txt').read_text()=='DO NOT CHANGE'
     if before:
-        assert before=={p.relative_to(fixture/'.venv').as_posix():p.read_bytes() for p in (fixture/'.venv').rglob('*') if p.is_file()}
+        assert before=={p.relative_to(internal/'.venv').as_posix():p.read_bytes() for p in (internal/'.venv').rglob('*') if p.is_file()}
     checks.append('old_and_incomplete_venvs_preserved_new_private_environment')
     # Dependency capability failures are injected in child Python only, never installed globally.
     injection=directory/'capability fixture';injection.mkdir()

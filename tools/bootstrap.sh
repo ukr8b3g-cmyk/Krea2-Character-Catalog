@@ -67,5 +67,7 @@ else
         catalog_finish "$catalog_status"
     fi
 fi
-"$catalog_python" "$catalog_tools/launch_catalog.py" "$@"
+catalog_entry="$catalog_tools/startup.py"
+[ -f "$catalog_entry" ] || catalog_entry="$catalog_tools/launch_catalog.py"
+"$catalog_python" "$catalog_entry" "$@"
 catalog_finish $?
