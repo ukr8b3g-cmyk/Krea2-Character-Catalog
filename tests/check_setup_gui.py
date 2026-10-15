@@ -1,6 +1,6 @@
 """Test the distributed setup launcher and folder-selection UI using fake local data."""
 from pathlib import Path
-import argparse,json,os,subprocess,sys,tempfile,time,urllib.request
+import argparse,json,os,socket,subprocess,sys,tempfile,time,urllib.parse,urllib.request
 SOURCE=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(SOURCE/'tools'))
 from package_release import safe_extract
@@ -9,13 +9,24 @@ HTTP=urllib.request.build_opener(urllib.request.ProxyHandler({}))
 def get(url):
     with HTTP.open(url,timeout=10) as r:return json.load(r)
 def stop(url,header,token):
+    pid=get(url+'api/info')['pid']
     request=urllib.request.Request(url+'api/shutdown',data=b'{}',headers={'Content-Type':'application/json',header:token})
     with HTTP.open(request,timeout=10) as r:assert json.load(r)['stopped']
     deadline=time.monotonic()+10
     while time.monotonic()<deadline:
-        try:get(url+'api/info');time.sleep(.1)
-        except OSError:return
-    raise AssertionError('Server did not stop')
+        with socket.socket() as probe:
+            probe.settimeout(1)
+            if probe.connect_ex(('127.0.0.1',urllib.parse.urlsplit(url).port))!=0:break
+        time.sleep(.1)
+    else:raise AssertionError('Server did not stop listening')
+    if os.name=='nt':
+        import ctypes
+        kernel=ctypes.WinDLL('kernel32',use_last_error=True);kernel.OpenProcess.restype=ctypes.c_void_p
+        handle=kernel.OpenProcess(0x100000,False,pid)
+        if handle:
+            kernel.WaitForSingleObject.argtypes=[ctypes.c_void_p,ctypes.c_uint32];kernel.CloseHandle.argtypes=[ctypes.c_void_p]
+            try:assert kernel.WaitForSingleObject(handle,10000)==0,'Server process did not exit'
+            finally:kernel.CloseHandle(handle)
 def run(archive,report):
     checks=[];result={'passed':False,'platform':sys.platform,'synthetic_data_only':True,'checks':checks};fixture=None;setup_url=None;home=None
     try:
@@ -74,7 +85,7 @@ def run(archive,report):
                     # Native setup workers release their file handles asynchronously after HTTP stop.
                     time.sleep(.5)
             result['test_servers_stopped']=True
-    except Exception as error:result['error']=str(error);raise
+    except Exception as error:result['passed']=False;result['error']=str(error);raise
     finally:
         report.parent.mkdir(parents=True,exist_ok=True);report.write_text(json.dumps(result,indent=2),encoding='utf-8');print(json.dumps(result),flush=True)
 if __name__=='__main__':
