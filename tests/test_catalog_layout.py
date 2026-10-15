@@ -21,10 +21,10 @@ class LayoutTests(unittest.TestCase):
             home=Path(directory);internal=home/'app'
             (internal/'review').mkdir(parents=True);(internal/'review/server.py').write_text('# fixture')
             for name in START_FILES.values():(home/name).write_text('# fixture')
-            self.assertEqual(app_root(home),internal)
-            self.assertEqual(app_root(internal),internal)
-            self.assertEqual(catalog_home(internal),home)
-            self.assertIn(str(home/START_FILES[sys.platform]),startup_command(internal))
+            self.assertEqual(app_root(home),internal.resolve())
+            self.assertEqual(app_root(internal),internal.resolve())
+            self.assertEqual(catalog_home(internal),home.resolve())
+            self.assertIn(str(home.resolve()/START_FILES[sys.platform]),startup_command(internal))
             self.assertEqual(startup_command(home,editor=True)[-1],'--editor')
 
     def test_wrong_folder_is_rejected(self):
