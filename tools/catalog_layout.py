@@ -28,5 +28,5 @@ def startup_command(folder,editor=False):
     name=START_FILES.get(sys.platform,START_FILES['linux'])
     if not (home/name).is_file():
         name='open_review.cmd' if os.name=='nt' else 'open_review.command' if sys.platform=='darwin' else 'open_review.sh'
-    result=[str(home/name)] if os.name=='nt' else ['sh',str(home/name)]
+    result=[str(home/name)] if os.name=='nt' else ['/bin/sh',str(home/name)]
     return result+(['--editor'] if editor else [])
