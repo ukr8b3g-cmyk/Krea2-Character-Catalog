@@ -55,7 +55,7 @@ def run(archive,report):
                             page.wait_for_function("document.querySelector('#catalog_root').value.length>0")
                             def choose(field,target):
                                 page.locator('[data-pick="'+field+'"]').click();page.wait_for_function("document.querySelector('#picker-path').textContent.length>0")
-                                parts=Path(target).parts;drive=parts[0].replace('\\','/')
+                                parts=Path(target).resolve().parts;drive=parts[0].replace('\\','/')
                                 page.locator('#picker-roots').select_option(drive)
                                 page.wait_for_function("value=>document.querySelector('#picker-path').textContent.replaceAll('\\\\','/')===value",arg=drive)
                                 for part in parts[1:]:
