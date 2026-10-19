@@ -207,3 +207,7 @@ AnimaDexは別のアプリです。[公式サイト](https://animadex.net/)・[�
 AnimaDex自体の設定が難しければ、ChatGPT・Claude・Codex等のLLMへ、公式手順を示して依頼できます。例えば「私のOSでAnimaDexを導入し、キャラクター情報とサムネイルをローカルへ取り込んで、画面で表示できるところまで案内してください」と伝え、OSと保存先を知らせます。書き出し用トークンなどの秘密情報は公開しないでください。本カタログがAnimaDexを自動インストールすることはありません。
 
 [Previous versions and downloads / 旧版のダウンロード](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases) — existing releases remain available.
+
+## ライセンス
+
+作者のアプリコード・文書・ツール・タグデータ・プロンプト・カタログ一覧は [MIT License](LICENSE) です。既存カタログの3919枚の画像は別扱いで、この許諾によって一括してMIT素材とはしません。第三者のキャラクター・作品・モデル・元データの権利は変更しません。適用範囲は [NOTICE.md](NOTICE.md) を参照してください。

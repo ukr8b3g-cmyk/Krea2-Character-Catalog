@@ -121,7 +121,7 @@ def build(source, destination, base, rejected):
     for name,data in entries.items():
         if name.startswith(('.github/','.git')) or name.startswith('open_') and '/' not in name:
             continue
-        if name in {'README.md','README.ja.md'} or name in starters:
+        if name in {'README.md','README.ja.md','LICENSE','NOTICE.md'} or name in starters:
             public_entries[name]=data
         else:
             public_entries['app/'+name]=data
@@ -135,7 +135,7 @@ def build(source, destination, base, rejected):
     for name in ['START_COMPARISON - macOS.command','START_COMPARISON - Linux.sh']:public_entries[comparison+name]=shell
     for name in ['index.html','compare.js','compare.css']:
         public_entries[comparison+'app/templates/'+name]=entries['skills/krea2-animadex-review/assets/'+name]
-    def public_path(name):return name if name in starters | {'README.md','README.ja.md'} else 'app/'+name
+    def public_path(name):return name if name in starters | {'README.md','README.ja.md','LICENSE','NOTICE.md'} else 'app/'+name
     for name in entries:
         target=public_path(name)
         if not name.endswith('.md') or target not in public_entries:continue
@@ -149,7 +149,7 @@ def build(source, destination, base, rejected):
             return ']('+quote(relative,safe='/._-')+(sep+fragment if sep else '')+')'
         public_entries[target]=re.sub(r'\]\(([^)]+)\)',relocate_link,public_entries[target].decode('utf-8-sig')).encode('utf-8')
     assert starters <= public_entries.keys(), 'All three clear startup files must be included.'
-    assert {name for name in public_entries if '/' not in name} == starters | {'README.md','README.ja.md'}
+    assert {name for name in public_entries if '/' not in name} == starters | {'README.md','README.ja.md','LICENSE','NOTICE.md'}
     with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as output:
         for name,data in sorted(public_entries.items()):
             entry = zipfile.ZipInfo(PREFIX+name,date_time=(2026,10,14,0,0,0))
@@ -165,7 +165,7 @@ def build(source, destination, base, rejected):
     shutil.copyfile(rejected,rejected_output)
     sums = ''.join(digest(p)+'  '+p.name+'\n' for p in (archive,rejected_output))
     (destination/'SHA256SUMS.txt').write_text(sums,encoding='ascii',newline='\n')
-    report = {'version':version,'files':len(public_entries),'images':len(images),'all_images_unchanged':True,'catalog_sha256':digest(archive),'catalog_bytes':archive.stat().st_size,'rejected_sha256':digest(rejected_output),'layout':'clear-start-app-folder','root_files':sorted(starters | {'README.md','README.ja.md'})}
+    report = {'version':version,'files':len(public_entries),'images':len(images),'all_images_unchanged':True,'catalog_sha256':digest(archive),'catalog_bytes':archive.stat().st_size,'rejected_sha256':digest(rejected_output),'layout':'clear-start-app-folder','root_files':sorted(starters | {'README.md','README.ja.md','LICENSE','NOTICE.md'})}
     (destination/'build-validation.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
     print(json.dumps(report),flush=True)
     return archive

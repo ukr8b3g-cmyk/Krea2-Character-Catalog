@@ -200,3 +200,7 @@ AnimaDex is a separate application: [website](https://animadex.net/), [local app
 If installation is confusing, you can ask an LLM assistant such as ChatGPT, Claude, or Codex to help set up AnimaDex using its official instructions. For example: “Help me install AnimaDex on my OS, import its character metadata and thumbnails locally, and confirm the local gallery works before configuring Krea2 comparison.” Tell it your OS and chosen folders; keep export tokens and other credentials private. This catalog does not install AnimaDex automatically.
 
 [Previous versions and downloads / 旧版のダウンロード](https://github.com/ukr8b3g-cmyk/Krea2-Character-Catalog/releases) — existing releases remain available.
+
+## License
+
+The maintainer-authored application code, documentation, tools, tag data, prompts, and catalog lists are licensed under the [MIT License](LICENSE). The existing 3,919 catalog images are a separate collection and are not granted a blanket MIT license here. Third-party character, work, model, and source-data rights remain unchanged. See [NOTICE.md](NOTICE.md) for scope.
