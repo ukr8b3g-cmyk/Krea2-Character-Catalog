@@ -273,7 +273,7 @@ class EditorCatalog:
     def csv_rows(self, data, query='', mapping=None):
         if not isinstance(query,str): raise ValueError('検索語を文字で指定してください。')
         if isinstance(data,bytes):
-            for encoding in ('utf-8-sig','utf-16','cp932'):
+            for encoding in (('utf-16',) if data.startswith((b'\xff\xfe',b'\xfe\xff')) else ('utf-8-sig','cp932')):
                 try: text=data.decode(encoding); break
                 except UnicodeError: pass
             else: raise ValueError('CSVの文字コードを読み込めません。')

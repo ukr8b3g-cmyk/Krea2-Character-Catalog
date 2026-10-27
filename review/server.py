@@ -7,6 +7,7 @@ import json
 import os
 import re
 import secrets
+import socket
 import socketserver
 import threading
 import time
@@ -14,7 +15,7 @@ from catalog_editor import EditorCatalog, decode_bytes, inspect_image
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
-from runtime_support import CatalogLock, atomic_json, catalog_version, folder_available, read_json
+from runtime_support import bind_catalog_server, CatalogLock, atomic_json, catalog_version, folder_available, read_json
 
 
 RUN = re.compile(r"(?:run|test)-[0-9]{8}-[0-9]{6}")
@@ -23,7 +24,10 @@ ASSETS = Path(__file__).resolve().parent
 
 
 class LocalCatalogServer(ThreadingHTTPServer):
+    allow_reuse_address = os.name != "nt"
+
     def server_bind(self):
+        if os.name == "nt":self.socket.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1)
         # A loopback-only catalog needs no reverse DNS; macOS resolvers can stall it.
         socketserver.TCPServer.server_bind(self)
         self.server_name = 'localhost'
@@ -727,16 +731,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args.root = args.root.resolve()
     with CatalogLock(args.root / 'outputs/review_server.lock', timeout=0):
-        try:
-            server = make_server(args.root, args.port)
-        except OSError as error:
-            import errno
-            occupied = error.errno in (errno.EADDRINUSE, 10048) or (os.name == 'nt' and getattr(error, 'winerror', None) == 10013)
-            if not args.fallback_port or not args.port or not occupied:
-                raise
-            server = make_server(args.root, 0)
+        server, origin_info = bind_catalog_server(args.root,args.port,args.fallback_port,make_server)
         service_path = args.root / "outputs/review_service.json"
-        atomic_json(service_path, {"pid":os.getpid(), "url":f"http://127.0.0.1:{server.server_port}/",
+        atomic_json(service_path, {"pid":os.getpid(), **origin_info, "url":f"http://127.0.0.1:{server.server_port}/",
                     "root":str(args.root), "python":__import__('sys').executable,
                     "version":catalog_version(args.root), "method":"Portable Python launcher"})
         print(f"Review screen: http://127.0.0.1:{server.server_port}/", flush=True)

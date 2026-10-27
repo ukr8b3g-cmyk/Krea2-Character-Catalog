@@ -111,3 +111,39 @@ def reveal_image(path):
         raise ValueError('Opening folders requires a desktop file manager. You can still open the original image in your browser.')
     subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return {'opened': True}
+
+
+def catalog_origin(root):
+    value=read_json(Path(root)/'outputs/review_origin.json')
+    if (not isinstance(value,dict) or value.get('schema_version')!=1
+            or type(value.get('port')) is not int or not 1<=value['port']<=65535
+            or type(value.get('requested_port')) is not int or not 0<=value['requested_port']<=65535):
+        return {}
+    return value
+
+
+def bind_catalog_server(root, requested_port, fallback, factory):
+    import errno
+    saved=catalog_origin(root)
+    ports=[]
+    if saved.get('requested_port')==requested_port:ports.append(saved['port'])
+    if requested_port not in ports:ports.append(requested_port)
+    server=None
+    for port in ports:
+        try:
+            server=factory(root,port)
+            break
+        except OSError as error:
+            occupied=error.errno in (errno.EADDRINUSE,10048) or (os.name=='nt' and getattr(error,'winerror',None)==10013)
+            if not fallback or not port or not occupied:raise
+    if server is None:server=factory(root,0)
+    previous=f"http://127.0.0.1:{saved['port']}/" if saved else None
+    current=f'http://127.0.0.1:{server.server_port}/'
+    changed=bool(previous and previous!=current)
+    try:
+        atomic_json(Path(root)/'outputs/review_origin.json',{'schema_version':1,'requested_port':requested_port,
+                    'port':server.server_port,'previous_url':previous if changed else saved.get('previous_url')})
+    except Exception:
+        server.server_close()
+        raise
+    return server,{'origin_changed':changed,'previous_url':previous if changed else None}

@@ -148,11 +148,17 @@
 
   function copyrightCountKey(record){return isKyotoCharacter(record)?kyotoAnimationGroup:isChineseCharacter(record)?chineseAnimationGroup:isVoiceCharacter(record)?voiceCopyrightGroup:record.copyright;}
   function copyrightTotals(){const query=currentQuery();if(!query.copyrightTotals){query.copyrightTotals=new Map();for(const record of query.matches){const key=copyrightCountKey(record);query.copyrightTotals.set(key,(query.copyrightTotals.get(key)||0)+1);}}return query.copyrightTotals;}
+  function generationTime(record){
+    const match=/(?:run|test)-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})/.exec(record.run_id||'');
+    if(match)return Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3]),Number(match[4]),Number(match[5]),Number(match[6]));
+    const stamp=Date.parse(record.added_at||record.rendered_at||'');
+    return Number.isFinite(stamp)?stamp:0;
+  }
   function compareRecords(a,b,order=$('sort').value){
     const compare=catalogCollator.compare,items=ensureCatalog().items,first=items.get(a.key),second=items.get(b.key);
     if(order==='artist_rank'&&a.kind==='style'&&b.kind==='style'){const rank=r=>Number.isInteger(r.artist_rank)&&r.artist_rank>0?r.artist_rank:Infinity;const firstRank=rank(a),secondRank=rank(b);return (firstRank===secondRank?0:firstRank-secondRank)||compare(a.name,b.name)||compare(a.key,b.key);}
     if(order==='name')return compare(a.name,b.name)||compare(a.key,b.key);
-    if(order==='generation'||order==='newest'){const result=compare(first.generationSort,second.generationSort)||((a.source_index??parseInt(a.id.slice(1)))-(b.source_index??parseInt(b.id.slice(1))));return order==='newest'?-result:result;}
+    if(order==='generation'||order==='newest'){const index=r=>r.run_id==='user-added'?0:(r.source_index??(parseInt(r.id.slice(1))||0));const result=generationTime(a)-generationTime(b)||compare(first.generationSort,second.generationSort)||index(a)-index(b)||compare(a.key,b.key);return order==='newest'?-result:result;}
     const counts=copyrightTotals(),countOrder=(counts.get(copyrightCountKey(b))||0)-(counts.get(copyrightCountKey(a))||0);
     return countOrder||compare(first.copyrightSort,second.copyrightSort)||compare(a.name,b.name)||compare(a.key,b.key);
   }

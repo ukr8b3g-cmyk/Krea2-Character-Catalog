@@ -16,7 +16,7 @@ import webbrowser
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'review'))
-from runtime_support import CatalogLock, atomic_json, catalog_version, read_json
+from runtime_support import catalog_origin, CatalogLock, atomic_json, catalog_version, read_json
 from catalog_layout import app_root
 
 HTTP = urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -44,7 +44,10 @@ def same_catalog(info, root):
 
 def service(root, port):
     saved = read_json(root / 'outputs/review_service.json')
-    urls = [saved.get('url'), f'http://127.0.0.1:{port}/'] if port else [saved.get('url')]
+    origin=catalog_origin(root)
+    urls=[saved.get('url')]
+    if origin:urls.append(f"http://127.0.0.1:{origin['port']}/")
+    if port:urls.append(f'http://127.0.0.1:{port}/')
     for url in dict.fromkeys(urls):
         if not valid_url(url):
             continue
@@ -213,11 +216,15 @@ def launch(args):
                     child.wait(timeout=10)
                 raise RuntimeError('Startup timed out. See outputs/review_server.err.log.')
         route = '/editor' if args.editor else args.route
+        origin_info=read_json(root/'outputs/review_service.json')
+        if origin_info.get('origin_changed'):
+            previous_port=urllib.parse.urlsplit(origin_info['previous_url']).port
+            print('Catalog URL changed from '+str(origin_info.get('previous_url'))+' to '+url+'. Browser drafts/settings remain at the previous URL; do not clear its browser data. Close this catalog, free the previous port, then reopen with --port '+str(previous_port)+' to restore that origin.',file=sys.stderr,flush=True)
         target = url + route
         if not args.no_open:
             if not webbrowser.open(target):
                 print('Open this address in your browser: ' + target, file=sys.stderr)
-        return {'url':target, 'root':str(root), 'pid':info['pid'], 'reused':reused, 'version':info.get('catalog_version')}
+        return {'url':target, 'root':str(root), 'pid':info['pid'], 'reused':reused, 'version':info.get('catalog_version'), 'origin_changed':bool(origin_info.get('origin_changed')), 'previous_url':origin_info.get('previous_url')}
 
 
 def main():

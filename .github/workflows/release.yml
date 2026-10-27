@@ -52,8 +52,8 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
               output.write(f"version={checked_version(Path.cwd())}\n")
           PY
-      - name: Build verified complete ZIP
-        run: python tools/package_release.py --dest dist --cache "$RUNNER_TEMP/catalog-base"
+      - name: Update verified previous ZIP with 7-Zip
+        run: python tools/update_release_zip.py --dest dist --cache "$RUNNER_TEMP/catalog-base"
       - uses: actions/upload-artifact@v4
         with:
           name: catalog-release-candidate
@@ -88,6 +88,8 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Verify native locks and folder routing
         run: python -B -m unittest discover -s tests -v
+      - name: Verify JSON workflow races and chronological sorting from the distributed ZIP
+        run: python -B tests/check_review_four_browser.py --archive dist/Krea2-Character-Catalog-v${{ needs.build.outputs.version }}.zip --report reports/review-four-${{ matrix.os }}.json
       - name: Test the complete ZIP on this OS
         run: python -B tests/check_archive_runtime.py --archive dist/Krea2-Character-Catalog-v${{ needs.build.outputs.version }}.zip --report reports/${{ matrix.os }}.json --test-venv --old-python "${{ steps.old-python.outputs.python-path }}" --browser-test
       - name: Test comparison and metadata contracts from the distributed ZIP
