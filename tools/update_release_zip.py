@@ -82,7 +82,12 @@ def build(source, destination, cache, seven_zip=None):
             name = relative.as_posix()
             if name.startswith(('.github/', '.git')) or (name.startswith('open_') and '/' not in name):
                 continue
-            candidates[public_path(name)] = (name, path.read_bytes())
+            data = path.read_bytes()
+            if name == 'review/index.html':
+                if data.count(b'<html lang="en">') != 1:
+                    raise ValueError('The catalog HTML version stamp cannot be applied.')
+                data = data.replace(b'<html lang="en">', ('<html lang="en" data-catalog-version="'+version+'">').encode('ascii'), 1)
+            candidates[public_path(name)] = (name, data)
         available = {name[len(PREFIX):] for name in old_names} | set(candidates)
         stage = Path(temporary)
         changed = {}
